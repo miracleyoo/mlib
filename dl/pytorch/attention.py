@@ -17,11 +17,15 @@ class Attention(nn.Module):
             x, _ = self.atten1(x, lengths)
     """
 
-    def __init__(self, hidden_size, batch_first=False):
+    def __init__(self, hidden_size, batch_first=True, device=None):
         super(Attention, self).__init__()
 
         self.hidden_size = hidden_size
         self.batch_first = batch_first
+        if device is None:
+            self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        else:
+            self.device = device
 
         self.att_weights = nn.Parameter(
             torch.Tensor(1, hidden_size), requires_grad=True)
@@ -51,7 +55,7 @@ class Attention(nn.Module):
         attentions = torch.softmax(F.relu(weights.squeeze()), dim=-1)
 
         # create mask based on the sentence lengths
-        mask = torch.ones(attentions.size(), requires_grad=True).cuda()
+        mask = torch.ones(attentions.size(), requires_grad=True).to(self.device)
         for i, l in enumerate(lengths):  # skip the first sentence
             if l < max_len:
                 mask[i, l:] = 0
