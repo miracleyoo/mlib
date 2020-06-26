@@ -5,13 +5,16 @@ import torch.nn.functional as F
 
 
 class Attention(nn.Module):
-    """ Pytorch attention layer code inspired from:
+    """ Pytorch self-attention layer code inspired from:
     Link:
         https://discuss.pytorch.org/t/self-attention-on-words-and-masking/5671/4
     Original Web Page:
         https://www.kaggle.com/dannykliu/lstm-with-attention-clr-in-pytorch
     Usage:
-        self.atten1 = Attention(hidden_dim*2, batch_first=True) # 2 is bidrectional
+        In __init__():
+            self.atten1 = Attention(hidden_dim*2, batch_first=True) # 2 is bidrectional
+        In forward():
+            x, _ = self.atten1(x, lengths)
     """
 
     def __init__(self, hidden_size, batch_first=False):
