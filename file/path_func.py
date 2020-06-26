@@ -138,4 +138,7 @@ def listdir(path, is_file=None, is_hide=None, suffix_type=None, start=None, end=
 
     if end is not None:
         files = [i for i in files if stem(i).endswith(str(end))]
+    
+    files.sort()
+    
     return files

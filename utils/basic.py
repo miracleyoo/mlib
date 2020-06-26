@@ -19,6 +19,9 @@ def log(*snippets, end=None, tag="INFO", prefix=""):
     print(f"{prefix}[{tag}]", time.strftime("[%Y-%m-%d %H:%M:%S]", time.localtime()) + " " + "".join([str(s) for s in snippets]),
           end=end)
 
+def time_string():
+    return time.strftime("%Y-%m-%d_%H-%M-%S", time.localtime())
+
 
 def tic_toc(func):
     """Print the time consumption of a certain function when a it is excuted.
