@@ -12,8 +12,8 @@ from pathlib2 import Path
 _image_extensions = ['.bmp', '.jpeg', '.jpg', '.png', '.tif', '.tiff']
 _video_extensions = ['.avi', '.flv', '.mkv', '.mov', '.mp4', '.mpeg', '.webm']
 
-__all__=["host_values_selector", "make_new", "get_folder", "get_image_paths", "backup_file",
-         "stem", "suffix", "listdir"]
+__all__ = ["host_values_selector", "make_new", "get_folder", "get_image_paths", "backup_file",
+           "stem", "suffix", "listdir"]
 
 
 def host_values_selector(misaka_value=None, gypsum_value=None, win_value=None, macos_value=None):
@@ -37,11 +37,11 @@ def host_values_selector(misaka_value=None, gypsum_value=None, win_value=None, m
 
 
 def make_new(root, name=None):
-    """ Check the ability of making a new folder or create a new file. 
+    """ Check the ability of making a new folder or create a new file.
 
     If the folder already exists, this function will try to make `path`_`idx` folder,
     idx will starts from 1 and keeps +1 until find a valid name without occupation.
-    
+
     If the folder and its parent folders don't exist, keeps making these series of folders.
 
     Args:
@@ -125,29 +125,48 @@ def suffix(path):
     return os.path.splitext(os.path.basename(path))[1]
 
 
-def listdir(path, is_file=None, is_hide=None, suffix_type=None, start=None, end=None):
+def listdir(path,
+            is_file=None,
+            is_hide=None,
+            suffix_type=None,
+            start=None,
+            end=None,
+            contain=None):
+    """ Return a file list of a certain folder. All these files meets some certain requirement.
+
+    """
     path = str(path)
-    files = [op.join(path, f) for f in os.listdir(path)]
-    if is_file:
-        files = [i for i in files if op.isfile(i)]
-    elif is_file == False:
-        files = [i for i in files if not op.isfile(i)]
 
-    if is_hide:
-        files = [i for i in files if stem(i).startswith(".")]
-    elif is_hide == False:
-        files = [i for i in files if not stem(i).startswith(".")]
+    assert is_file is None or type(is_file) == bool
+    assert is_hide is None or type(is_hide) == bool
+    assert suffix_type is None or type(suffix_type) == str
+    assert start is None or type(start) == str
+    assert end is None or type(end) == str
+    assert contain is None or type(contain) == str
 
-    if suffix_type is not None:
-        files = [i for i in files if suffix(
-            i).lstrip(".") == suffix_type.lstrip(".")]
+    files = []
+    for file in os.listdir(path):
+        file = op.join(path, file)
 
-    if start is not None:
-        files = [i for i in files if stem(i).startswith(str(start))]
+        if is_file is not None and is_file != op.isfile(file):
+            continue
 
-    if end is not None:
-        files = [i for i in files if stem(i).endswith(str(end))]
-    
+        if is_hide is not None and is_hide != stem(file).startswith("."):
+            continue
+
+        if suffix_type is not None and suffix(file).lstrip(".") != suffix_type.lstrip("."):
+            continue
+
+        if start is not None and not stem(file).startswith(start):
+            continue
+
+        if end is not None and not stem(file).endswith(end):
+            continue
+
+        if contain is not None and not contain in stem(file):
+            continue
+
+        files.append(file)
+
     files.sort()
-    
     return files
