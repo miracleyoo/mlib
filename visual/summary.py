@@ -8,6 +8,7 @@ from pathlib2 import Path
 from sklearn.metrics import classification_report
 from sklearn.metrics import confusion_matrix
 
+
 def plot_confusion_matrix(cm,
                           target_names,
                           title='Confusion matrix',
@@ -65,7 +66,6 @@ def plot_confusion_matrix(cm,
     if normalize:
         cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
 
-
     thresh = cm.max() / 1.5 if normalize else cm.max() / 2
     for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
         if normalize:
@@ -77,26 +77,28 @@ def plot_confusion_matrix(cm,
                      horizontalalignment="center",
                      color="white" if cm[i, j] > thresh else "black")
 
-
     plt.ylabel('True label')
-    plt.xlabel('Predicted label\naccuracy={:0.4f}; misclass={:0.4f}'.format(accuracy, misclass))
+    plt.xlabel('Predicted label\naccuracy={:0.4f}; misclass={:0.4f}'.format(
+        accuracy, misclass))
     plt.tight_layout()
     if save_path is None:
         plt.show()
     else:
         plt.savefig(save_path, dpi=100)
         plt.close()
-        
+
+
 def summary(y_true, y_pred, target_names, save_root=None, epoch=0):
     cm = confusion_matrix(y_true, y_pred)
     df = pd.DataFrame(data=cm, columns=target_names, index=target_names)
     cm_string = df.to_string()
-    summary_content = classification_report(y_true, y_pred, target_names=target_names)
+    summary_content = classification_report(
+        y_true, y_pred, target_names=target_names)
     if save_root is None:
         print(summary_content)
-        save_path=None
+        save_path = None
     else:
-        save_root=Path(save_root)
+        save_root = Path(save_root)
         if not save_root.exists():
             os.makedirs(str(save_root))
         with open(str(save_root/"summary.txt"), "a+") as f:
@@ -110,8 +112,8 @@ def summary(y_true, y_pred, target_names, save_root=None, epoch=0):
             if not (save_root/"cm").exists():
                 os.makedirs(str(save_root/"cm"))
             save_path = str(save_root/"cm"/f"epoch_{epoch}.png")
-    plot_confusion_matrix(cm           = cm,
-                          normalize    = False,
-                          target_names = target_names,
-                          title        = "Confusion Matrix",
-                          save_path    = save_path)
+    plot_confusion_matrix(cm=cm,
+                          normalize=False,
+                          target_names=target_names,
+                          title="Confusion Matrix",
+                          save_path=save_path)
