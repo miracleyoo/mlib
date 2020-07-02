@@ -12,6 +12,9 @@ from pathlib2 import Path
 _image_extensions = ['.bmp', '.jpeg', '.jpg', '.png', '.tif', '.tiff']
 _video_extensions = ['.avi', '.flv', '.mkv', '.mov', '.mp4', '.mpeg', '.webm']
 
+__all__=["host_values_selector", "make_new", "get_folder", "get_image_paths", "backup_file",
+         "stem", "suffix", "listdir"]
+
 
 def host_values_selector(misaka_value=None, gypsum_value=None, win_value=None, macos_value=None):
     """ Return a path which is compatible for multiple machines based on host name and platform.
@@ -35,6 +38,12 @@ def host_values_selector(misaka_value=None, gypsum_value=None, win_value=None, m
 
 def make_new(root, name=None):
     """ Check the ability of making a new folder or create a new file. 
+
+    If the folder already exists, this function will try to make `path`_`idx` folder,
+    idx will starts from 1 and keeps +1 until find a valid name without occupation.
+    
+    If the folder and its parent folders don't exist, keeps making these series of folders.
+
     Args:
         root: The root path where the new file or folder is going to be created.
             If name is not provided, root is the full path of the target object.

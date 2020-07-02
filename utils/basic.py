@@ -1,8 +1,11 @@
 import functools
 import time
 
+__all__=["Timer", "log", "time_string", "tic_toc", "is_notebook"]
 
 class Timer(object):
+    """ A timer 
+    """
     def __init__(self, name=None):
         self.name = name
 
@@ -16,10 +19,14 @@ class Timer(object):
 
 
 def log(*snippets, end=None, tag="INFO", prefix=""):
+    """ Easily replace print function to get a log-like format output with time and tag.
+    """
     print(f"{prefix}[{tag}]", time.strftime("[%Y-%m-%d %H:%M:%S]", time.localtime()) + " " + "".join([str(s) for s in snippets]),
           end=end)
 
 def time_string():
+    """ Generate a time string from year to second.
+    """
     return time.strftime("%Y-%m-%d_%H-%M-%S", time.localtime())
 
 
@@ -27,6 +34,10 @@ def tic_toc(func):
     """Print the time consumption of a certain function when a it is excuted.
     Args:
         func: An function.
+    Usage:
+        @tic_toc
+        def func():
+            pass
     """
     @functools.wraps(func)
     def wrapper(*args, **kw):
@@ -36,3 +47,17 @@ def tic_toc(func):
               (func.__name__, time.time() - tic))
         return res
     return wrapper
+
+def is_notebook():
+    """ Retrun a boolean value showing whether the code now is running on jupyter notebook.
+    """
+    try:
+        shell = get_ipython().__class__.__name__
+        if shell == 'ZMQInteractiveShell':
+            return True   # Jupyter notebook or qtconsole
+        elif shell == 'TerminalInteractiveShell':
+            return False  # Terminal running IPython
+        else:
+            return False  # Other type (?)
+    except NameError:
+        return False      # Probably standard Python interpreter

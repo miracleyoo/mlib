@@ -83,3 +83,12 @@ def setup_logging(override_level=None,
             log_file_path = default_log_file_path if log_file_path is None else log_file_path
             fileHandler = logging.FileHandler(log_file_path)
             logging.getLogger().addHandler(fileHandler)
+
+
+""" How to use a customized filter
+class NoParsingFilter(logging.Filter):
+    def filter(self, record):
+        return not record.getMessage().startswith('parsing')
+
+logger.addFilter(NoParsingFilter())
+"""
