@@ -1,28 +1,38 @@
-import os
-import sys
-import time
-import math
-import yaml
-
-import os.path as op
-import numpy as np
-import pandas as pd
-import pickle as pkl
-
-from pathlib2 import Path
 from functools import partial
+from mlib.lang.lazy_loader import LazyLoader
 
-from .file import path_func as pf
-from .utils.basic import *
 from .utils.logger import *
+from .utils.basic import *
+
+_import_dict = {
+    "os": "os",
+    "sys": "sys",
+    "time": "time",
+    "math": "math",
+    "yaml": "yaml",
+    "random": "random",
+    "op": "os.path",
+    "np": "numpy",
+    "pd": "pandas",
+    "pkl": "pickle",
+    "glob": "glob",
+
+    "pf": "mlib.file.path_func",
+    "lang": "mlib.lang"
+}
+
+for key, value in _import_dict.items():
+    exec(f"{key}=LazyLoader('{key}', globals(), '{value}')")
+
 
 if is_notebook():
-    from tqdm.notebook import tqdm
-    import matplotlib.pyplot as plt
+    tqdm = LazyLoader("tqdm", globals(), "tqdm.notebook")
+    plt = LazyLoader("plt", globals(), "matplotlib.pyplot")
 else:
-    from tqdm import tqdm
+    tqdm = LazyLoader("tqdm", globals(), "tqdm")
 
 """
+# os = LazyLoader("os", globals(), "os")
 from os.path import dirname, basename, isfile, join
 import glob
 modules = glob.glob(join(dirname(__file__), "*.py"))
