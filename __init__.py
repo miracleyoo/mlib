@@ -1,4 +1,14 @@
+""" mlib is a personal library developed by miracleyoo.
+
+This __init__.py file will use lazy import to import a bunch of
+modules I use frequently, and these modules will be automatically
+loaded when they are called in the code.
+
+Also, some frequently used package abbreviation inside mlib is 
+also included and loaded.
+"""
 from functools import partial
+from pathlib2 import Path
 from mlib.lang.lazy_loader import LazyLoader
 
 from .utils.logger import *
