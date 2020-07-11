@@ -55,7 +55,7 @@ class JSONSerializer(Serializer):
 
 
 class PickleSerializer(Serializer):
-    ext = "p"
+    ext = "pkl"
     woptions = "wb"
     roptions = "rb"
 

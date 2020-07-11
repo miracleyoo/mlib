@@ -8,6 +8,8 @@ import os.path as op
 
 from . import path_func as pf
 from ..lang.adv_import import install_if_not_exist
+from ..cv.video.video_reader import VideoReader
+from ..cv.video.video_generator import gen_video
 
 __all__ = ["save", "load", "write", "read", "dump"]
 
@@ -241,15 +243,15 @@ class VideoController(IOCenter):
 
     @classmethod
     def save(cls, obj, path, **kwds):
-        if "fps" not in locals():
-            fps = 25
+        if "fps" not in kwds.keys():
+            kwds["fps"] = 25
         path = cls.process_path(path)
-        gen_video(path, obj, fps, **kwds)
+        gen_video(path, obj, **kwds)
 
     @classmethod
     def load(cls, path, **kwds):
         if op.exists(path):
-            return VideoReader(**kwds)
+            return VideoReader(path, **kwds)
         else:
             raise FileNotFoundError(path)
 
@@ -334,8 +336,6 @@ def selector(path, cls_type):
                              import_name="PIL.Image", imported_name="Image")
         cont = ImageController()
     elif cls_type == "video":
-        from ..cv.video.video_reader import VideoReader
-        from ..cv.video.video_generator import gen_video
         cont = VideoController()
     else:
         raise TypeError(

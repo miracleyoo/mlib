@@ -5,10 +5,11 @@ import numpy as np
 
 logger = logging.getLogger(__name__)
 
+
 class VideoReader:
     """Helper class for reading one or more frames from a video file."""
 
-    def __init__(self, insets=(0, 0)):
+    def __init__(self, path=None, insets=(0, 0)):
         """Creates a new VideoReader.
 
         Arguments:
@@ -19,30 +20,32 @@ class VideoReader:
                 faces are too small.
         """
         self.insets = insets
+        self.path = path
 
-    def read_metadata(self, path):
+    def set_path(self, path):
+        self.path = path
+
+    def read_metadata(self):
         """Extract the necessary information from a video file.
-        Args:
-            video_path: The path of a video file.
+
         Returns:
             frame_num: The total frame number of the video.
             fps: The `frame per second` value of the video.
             width: The frame width of the video.
             height: The frame height of the video.
         """
-        vidcap = cv2.VideoCapture(path)
+        vidcap = cv2.VideoCapture(self.path)
         frame_num = int(vidcap.get(cv2.CAP_PROP_FRAME_COUNT))
         fps = vidcap.get(cv2.CAP_PROP_FPS)
-        width = np.int32(vidcap.get(cv2.CAP_PROP_FRAME_WIDTH)) # float
+        width = np.int32(vidcap.get(cv2.CAP_PROP_FRAME_WIDTH))  # float
         height = np.int32(vidcap.get(cv2.CAP_PROP_FRAME_HEIGHT))  # float
         vidcap.release()
-        return frame_num, fps, width, height
+        return fps, frame_num, width, height
 
-    def read_frames(self, path, num_frames, jitter=0, seed=None):
+    def read_frames(self, num_frames, jitter=0, seed=None):
         """Reads frames that are always evenly spaced throughout the video.
 
         Arguments:
-            path: the video file
             num_frames: how many frames to read, -1 means the entire video
                 (warning: this will take up a lot of memory!)
             jitter: if not 0, adds small random offsets to the frame indices;
@@ -52,55 +55,61 @@ class VideoReader:
         """
         assert num_frames > 0
 
-        capture = cv2.VideoCapture(path)
+        capture = cv2.VideoCapture(self.path)
         frame_count = int(capture.get(cv2.CAP_PROP_FRAME_COUNT))
-        if frame_count <= 0: return None
+        if frame_count <= 0:
+            return None
 
-        frame_idxs = np.linspace(0, frame_count - 1, num_frames, endpoint=True, dtype=np.int)
+        frame_idxs = np.linspace(
+            0, frame_count - 1, num_frames, endpoint=True, dtype=np.int)
+        logger.debug(f"Frame indexes: {frame_idxs}")
         if jitter > 0:
             np.random.seed(seed)
-            jitter_offsets = np.random.randint(-jitter, jitter, len(frame_idxs))
-            frame_idxs = np.clip(frame_idxs + jitter_offsets, 0, frame_count - 1)
+            jitter_offsets = np.random.randint(-jitter,
+                                               jitter, len(frame_idxs))
+            frame_idxs = np.clip(
+                frame_idxs + jitter_offsets, 0, frame_count - 1)
 
-        result = self._read_frames_at_indices(path, capture, frame_idxs)
+        result = self._read_frames_at_indices(self.path, capture, frame_idxs)
         capture.release()
         return result
-    
-    def read_all_frames(self, path):
-        capture = cv2.VideoCapture(path)
+
+    def read_all_frames(self):
+        capture = cv2.VideoCapture(self.path)
         frame_count = int(capture.get(cv2.CAP_PROP_FRAME_COUNT))
-        if frame_count <= 0: return None
+        if frame_count <= 0:
+            return None
         frame_idxs = np.arange(frame_count)
-        result = self._read_frames_at_indices(path, capture, frame_idxs)
+        result = self._read_frames_at_indices(self.path, capture, frame_idxs)
         capture.release()
         return result
 
-    def read_random_frames(self, path, num_frames, seed=None):
+    def read_random_frames(self, num_frames, seed=None):
         """Picks the frame indices at random.
-        
+
         Arguments:
-            path: the video file
             num_frames: how many frames to read, -1 means the entire video
                 (warning: this will take up a lot of memory!)
         """
         assert num_frames > 0
         np.random.seed(seed)
 
-        capture = cv2.VideoCapture(path)
+        capture = cv2.VideoCapture(self.path)
         frame_count = int(capture.get(cv2.CAP_PROP_FRAME_COUNT))
-        if frame_count <= 0: return None
+        if frame_count <= 0:
+            return None
 
-        frame_idxs = sorted(np.random.choice(np.arange(0, frame_count), num_frames))
-        result = self._read_frames_at_indices(path, capture, frame_idxs)
+        frame_idxs = sorted(np.random.choice(
+            np.arange(0, frame_count), num_frames))
+        result = self._read_frames_at_indices(self.path, capture, frame_idxs)
 
         capture.release()
         return result
 
-    def read_frames_at_indices(self, path, frame_idxs):
+    def read_frames_at_indices(self, frame_idxs):
         """Reads frames from a video and puts them into a NumPy array.
 
         Arguments:
-            path: the video file
             frame_idxs: a list of frame indices. Important: should be
                 sorted from low-to-high! If an index appears multiple
                 times, the frame is still read only once.
@@ -116,8 +125,8 @@ class VideoReader:
         frames were read.
         """
         assert len(frame_idxs) > 0
-        capture = cv2.VideoCapture(path)
-        result = self._read_frames_at_indices(path, capture, frame_idxs)
+        capture = cv2.VideoCapture(self.path)
+        result = self._read_frames_at_indices(self.path, capture, frame_idxs)
         capture.release()
         return result
 
@@ -129,15 +138,18 @@ class VideoReader:
                 # Get the next frame, but don't decode if we're not using it.
                 ret = capture.grab()
                 if not ret:
-                    logger.error("Error grabbing frame %d from movie %s" % (frame_idx, path))
+                    logger.error(
+                        "Error grabbing frame %d from movie %s" % (frame_idx, path))
                     break
 
                 # Need to look at this frame?
                 current = len(idxs_read)
                 if frame_idx == frame_idxs[current]:
                     ret, frame = capture.retrieve()
+                    logger.debug(f"Retriving frame: {frame_idx}")
                     if not ret or frame is None:
-                        logger.error("Error retrieving frame %d from movie %s" % (frame_idx, path))
+                        logger.error(
+                            "Error retrieving frame %d from movie %s" % (frame_idx, path))
                         break
 
                     frame = self._postprocess_frame(frame)
@@ -146,28 +158,29 @@ class VideoReader:
 
             if len(frames) > 0:
                 return np.stack(frames), idxs_read
-            
+
             logger.info("No frames read from movie %s" % path)
             return None
         except:
             logger.exception("Exception while reading movie %s" % path)
-            return None    
+            return None
 
-    def read_middle_frame(self, path):
+    def read_middle_frame(self):
         """Reads the frame from the middle of the video."""
-        capture = cv2.VideoCapture(path)
+        capture = cv2.VideoCapture(self.path)
         frame_count = int(capture.get(cv2.CAP_PROP_FRAME_COUNT))
-        result = self._read_frame_at_index(path, capture, frame_count // 2)
+        result = self._read_frame_at_index(
+            self.path, capture, frame_count // 2)
         capture.release()
         return result
 
-    def read_frame_at_index(self, path, frame_idx):
+    def read_frame_at_index(self, frame_idx):
         """Reads a single frame from a video.
-        
+
         If you just want to read a single frame from the video, this is more
         efficient than scanning through the video to find the frame. However,
         for reading multiple frames it's not efficient.
-        
+
         My guess is that a "streaming" approach is more efficient than a 
         "random access" approach because, unless you happen to grab a keyframe, 
         the decoder still needs to read all the previous frames in order to 
@@ -176,21 +189,22 @@ class VideoReader:
         Returns a NumPy array of shape (1, H, W, 3) and the index of the frame,
         or None if reading failed.
         """
-        capture = cv2.VideoCapture(path)
-        result = self._read_frame_at_index(path, capture, frame_idx)
+        capture = cv2.VideoCapture(self.path)
+        result = self._read_frame_at_index(self.path, capture, frame_idx)
         capture.release()
         return result
 
     def _read_frame_at_index(self, path, capture, frame_idx):
         capture.set(cv2.CAP_PROP_POS_FRAMES, frame_idx)
-        ret, frame = capture.read()    
+        ret, frame = capture.read()
         if not ret or frame is None:
-            logger.error("Error retrieving frame %d from movie %s" % (frame_idx, path))
+            logger.error("Error retrieving frame %d from movie %s" %
+                         (frame_idx, path))
             return None
         else:
             frame = self._postprocess_frame(frame)
             return np.expand_dims(frame, axis=0), [frame_idx]
-    
+
     def _postprocess_frame(self, frame):
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
