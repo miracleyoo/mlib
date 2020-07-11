@@ -12,7 +12,7 @@ from pathlib2 import Path
 _image_extensions = ['.bmp', '.jpeg', '.jpg', '.png', '.tif', '.tiff']
 _video_extensions = ['.avi', '.flv', '.mkv', '.mov', '.mp4', '.mpeg', '.webm']
 
-__all__ = ["host_values_selector", "make_new", "get_folder", "get_image_paths", "backup_file",
+__all__ = ["host_values_selector", "make_new", "get_folder", "get_new_folder", "get_image_paths", "backup_file",
            "stem", "suffix", "listdir"]
 
 
@@ -36,8 +36,8 @@ def host_values_selector(misaka_value=None, gypsum_value=None, win_value=None, m
         return None
 
 
-def make_new(root, name=None):
-    """ Check the ability of making a new folder or create a new file.
+def get_new_folder(path):
+    """ Return a path to a folder, creating it if it doesn't exist, creating new one if existing.
 
     If the folder already exists, this function will try to make `path`_`idx` folder,
     idx will starts from 1 and keeps +1 until find a valid name without occupation.
@@ -45,42 +45,43 @@ def make_new(root, name=None):
     If the folder and its parent folders don't exist, keeps making these series of folders.
 
     Args:
-        root: The root path where the new file or folder is going to be created.
-            If name is not provided, root is the full path of the target object.
-        name: The folder/file name.
+        path: The path of the new folder.
     Returns:
-        _ : The guaranteed path of the folder/file.
+        _ : The guaranteed new path of the folder/file.
     """
-    root = Path(root)
+    path = Path(path)
+    name = path.name
+    root = Path(*path.parts[:-1])
 
-    if name is None:
-        name = root.name
-        root = Path(*root.parts[:-1])
-
-    if not root.exists():
-        root.mkdir(parents=True, exist_ok=True)
-
-    if not (root/name).exists():
-        if (root/name).suffix == '':
-            (root/name).mkdir(parents=True, exist_ok=True)
-        return str(root/name)
+    if not path.exists():
+        path.mkdir(parents=True, exist_ok=True)
     else:
         idx = 1
         while True:
             new_name = name+"_"+str(idx)
-            if not (root/new_name).exists():
-                if (root/new_name).suffix == '':
-                    os.makedirs(str(root/new_name))
+            new_path = root / new_name
+            if not new_path.exists():
+                if new_path.suffix == '':
+                    os.makedirs(str(new_path))
                 break
             idx += 1
-        return str(root/new_name)
+        return str(new_path)
+
+
+def make_new(path):
+    return get_new_folder(path)
 
 
 def get_folder(path):
-    """ Return a path to a folder, creating it if it doesn't exist """
-    output_dir = Path(path)
-    output_dir.mkdir(parents=True, exist_ok=True)
-    return output_dir
+    """ Return a path to a folder, creating it if it doesn't exist 
+    Args:
+        path: The path of the new folder.
+    Returns:
+        _ : The guaranteed path of the folder/file.
+    """
+    path = Path(path)
+    path.mkdir(parents=True, exist_ok=True)
+    return path
 
 
 def get_image_paths(directory, exclude=list(), debug=False):

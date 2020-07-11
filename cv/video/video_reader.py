@@ -1,23 +1,42 @@
 import os
 import cv2
+import logging
 import numpy as np
+
+logger = logging.getLogger(__name__)
 
 class VideoReader:
     """Helper class for reading one or more frames from a video file."""
 
-    def __init__(self, verbose=True, insets=(0, 0)):
+    def __init__(self, insets=(0, 0)):
         """Creates a new VideoReader.
 
         Arguments:
-            verbose: whether to print warnings and error messages
             insets: amount to inset the image by, as a percentage of 
                 (width, height). This lets you "zoom in" to an image 
                 to remove unimportant content around the borders. 
                 Useful for face detection, which may not work if the 
                 faces are too small.
         """
-        self.verbose = verbose
         self.insets = insets
+
+    def read_metadata(self, path):
+        """Extract the necessary information from a video file.
+        Args:
+            video_path: The path of a video file.
+        Returns:
+            frame_num: The total frame number of the video.
+            fps: The `frame per second` value of the video.
+            width: The frame width of the video.
+            height: The frame height of the video.
+        """
+        vidcap = cv2.VideoCapture(path)
+        frame_num = int(vidcap.get(cv2.CAP_PROP_FRAME_COUNT))
+        fps = vidcap.get(cv2.CAP_PROP_FPS)
+        width = np.int32(vidcap.get(cv2.CAP_PROP_FRAME_WIDTH)) # float
+        height = np.int32(vidcap.get(cv2.CAP_PROP_FRAME_HEIGHT))  # float
+        vidcap.release()
+        return frame_num, fps, width, height
 
     def read_frames(self, path, num_frames, jitter=0, seed=None):
         """Reads frames that are always evenly spaced throughout the video.
@@ -110,8 +129,7 @@ class VideoReader:
                 # Get the next frame, but don't decode if we're not using it.
                 ret = capture.grab()
                 if not ret:
-                    if self.verbose:
-                        print("Error grabbing frame %d from movie %s" % (frame_idx, path))
+                    logger.error("Error grabbing frame %d from movie %s" % (frame_idx, path))
                     break
 
                 # Need to look at this frame?
@@ -119,8 +137,7 @@ class VideoReader:
                 if frame_idx == frame_idxs[current]:
                     ret, frame = capture.retrieve()
                     if not ret or frame is None:
-                        if self.verbose:
-                            print("Error retrieving frame %d from movie %s" % (frame_idx, path))
+                        logger.error("Error retrieving frame %d from movie %s" % (frame_idx, path))
                         break
 
                     frame = self._postprocess_frame(frame)
@@ -129,12 +146,11 @@ class VideoReader:
 
             if len(frames) > 0:
                 return np.stack(frames), idxs_read
-            if self.verbose:
-                print("No frames read from movie %s" % path)
+            
+            logger.info("No frames read from movie %s" % path)
             return None
         except:
-            if self.verbose:
-                print("Exception while reading movie %s" % path)
+            logger.exception("Exception while reading movie %s" % path)
             return None    
 
     def read_middle_frame(self, path):
@@ -169,8 +185,7 @@ class VideoReader:
         capture.set(cv2.CAP_PROP_POS_FRAMES, frame_idx)
         ret, frame = capture.read()    
         if not ret or frame is None:
-            if self.verbose:
-                print("Error retrieving frame %d from movie %s" % (frame_idx, path))
+            logger.error("Error retrieving frame %d from movie %s" % (frame_idx, path))
             return None
         else:
             frame = self._postprocess_frame(frame)

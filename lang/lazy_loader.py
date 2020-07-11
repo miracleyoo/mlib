@@ -1,3 +1,10 @@
+""" A lazy loader for import.
+Link:
+    https://wil.yegelwel.com/lazily-importing-python-modules/
+    https://github.com/tensorflow/tensorflow/blob/master/tensorflow/python/util/lazy_loader.py
+Usage:
+    np = LazyLoader("np", globals(), "numpy")
+"""
 import importlib
 import types
 
