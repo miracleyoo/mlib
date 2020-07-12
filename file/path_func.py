@@ -2,6 +2,7 @@ import os
 import os.path as op
 
 import platform
+import logging
 import pandas as pd
 import numpy as np
 import pickle as pkl
@@ -15,6 +16,7 @@ _video_extensions = ['.avi', '.flv', '.mkv', '.mov', '.mp4', '.mpeg', '.webm']
 __all__ = ["host_values_selector", "make_new", "get_folder", "get_new_folder", "get_image_paths", "backup_file",
            "stem", "suffix", "listdir"]
 
+logger = logging.getLogger(__name__)
 
 def host_values_selector(misaka_value=None, gypsum_value=None, win_value=None, macos_value=None):
     """ Return a path which is compatible for multiple machines based on host name and platform.
@@ -32,7 +34,7 @@ def host_values_selector(misaka_value=None, gypsum_value=None, win_value=None, m
     elif hostname.startswith("node") or hostname == "gypsum":
         return gypsum_value
     else:
-        print("OS type not supported!")
+        logger.error("OS type not supported!")
         return None
 
 
@@ -49,12 +51,14 @@ def get_new_folder(path):
     Returns:
         _ : The guaranteed new path of the folder/file.
     """
+    logger.debug(f"Requested path: {path}")
     path = Path(path)
     name = path.name
     root = Path(*path.parts[:-1])
 
     if not path.exists():
         path.mkdir(parents=True, exist_ok=True)
+        new_path = path
     else:
         idx = 1
         while True:
@@ -62,14 +66,15 @@ def get_new_folder(path):
             new_path = root / new_name
             if not new_path.exists():
                 if new_path.suffix == '':
-                    os.makedirs(str(new_path))
+                    new_path.mkdir(parents=True, exist_ok=True)
+                    # os.makedirs(str(new_path))
                 break
             idx += 1
-        return str(new_path)
+    logger.debug(f"Retruning path: {str(new_path)}")
+    return str(new_path)
 
 
-def make_new(path):
-    return get_new_folder(path)
+make_new=get_new_folder(path)
 
 
 def get_folder(path):
@@ -79,6 +84,7 @@ def get_folder(path):
     Returns:
         _ : The guaranteed path of the folder/file.
     """
+    logger.debug(f"Requested path: {path}")
     path = Path(path)
     path.mkdir(parents=True, exist_ok=True)
     return path

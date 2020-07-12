@@ -1,9 +1,11 @@
 import cv2
+import logging
 import numpy as np
 from PIL import Image
+from hashlib import sha1
 
 
-def load_cv_img(img):
+def get_cv_img(img, cvt_rgb=True, force_color=False):
     """Convert the input to an OpenCV image.
     Args:
         img: A string, a PIL.Image object, or an OpenCV image
@@ -11,8 +13,7 @@ def load_cv_img(img):
         An OpenCV format, RGB channel ordered image
     """
     if isinstance(img, str):
-        img = cv2.imread(img, cv2.IMREAD_COLOR)
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        img = cv2_read_img(img, cvt_rgb=True, force_color=False)
     elif isinstance(img, np.ndarray):
         pass
     else:
@@ -22,6 +23,48 @@ def load_cv_img(img):
             raise TypeError(
                 "Input type is not supported! Only string, numpy array and PIL Image is supported here.")
     return img
+
+
+def cv2_read_img(filename, raise_error=False, cvt_rgb=True, force_color=False):
+    """ Read an image with cv2 and check that an image was actually loaded.
+        Logs an error if the image returned is None. or an error has occured.
+        Pass raise_error=True if error should be raised """
+    logger = logging.getLogger(__name__)  # pylint:disable=invalid-name
+    logger.trace("Requested image: '%s'", filename)
+    success = True
+    image = None
+    try:
+        if force_color:
+            image = cv2.imread(filename, cv2.IMREAD_COLOR)
+        else:
+            image = cv2.imread(
+                filename)  # pylint:disable=no-member,c-extension-no-member
+        if cvt_rgb:
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        if image is None:
+            raise ValueError
+    except TypeError:
+        success = False
+        msg = "Error while reading image (TypeError): '{}'".format(filename)
+        logger.error(msg)
+        if raise_error:
+            raise Exception(msg)
+    except ValueError:
+        success = False
+        msg = ("Error while reading image. This is most likely caused by special characters in "
+               "the filename: '{}'".format(filename))
+        logger.error(msg)
+        if raise_error:
+            raise Exception(msg)
+    except Exception as err:  # pylint:disable=broad-except
+        success = False
+        msg = "Failed to load image '{}'. Original Error: {}".format(
+            filename, str(err))
+        logger.error(msg)
+        if raise_error:
+            raise Exception(msg)
+    logger.trace("Loaded image: '%s'. Success: %s", filename, success)
+    return image
 
 
 def crop_by_box(img, face):
@@ -85,3 +128,24 @@ def resize(img, dim):
         dim: (width, height)
     """
     return cv2.resize(load_cv_img(img), dim, interpolation=cv2.INTER_AREA)
+
+
+def hash_image_file(filename):
+    """ Return an image file's sha1 hash """
+    logger = logging.getLogger(__name__)  # pylint:disable=invalid-name
+    img = cv2_read_img(filename, raise_error=True)
+    img_hash = sha1(img).hexdigest()
+    logger.trace("filename: '%s', hash: %s", filename, img_hash)
+    return img_hash
+
+
+def hash_encode_image(image, extension):
+    """ Encode the image, get the hash and return the hash with
+        encoded image """
+    img = cv2.imencode(extension, image)[
+        1]  # pylint:disable=no-member,c-extension-no-member
+    f_hash = sha1(
+        cv2.imdecode(  # pylint:disable=no-member,c-extension-no-member
+            img,
+            cv2.IMREAD_UNCHANGED)).hexdigest()  # pylint:disable=no-member,c-extension-no-member
+    return f_hash, img

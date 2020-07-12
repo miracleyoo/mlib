@@ -1,11 +1,14 @@
 import functools
 import time
 
-__all__=["Timer", "log", "time_string", "tic_toc", "is_notebook"]
+__all__ = ["Timer", "log", "time_string", "tic_toc", "is_notebook"]
 
+
+# -------------------------------------- Various Timer  --------------------------------------#
 class Timer(object):
     """ A timer 
     """
+
     def __init__(self, name=None):
         self.name = name
 
@@ -16,18 +19,6 @@ class Timer(object):
         print("==> [%s]:\t" % self.name, end="")
         self.time_elapsed = time.time() - self.t_start
         print("Elapsed Time: %s (s)" % self.time_elapsed)
-
-
-def log(*snippets, end=None, tag="INFO", prefix=""):
-    """ Easily replace print function to get a log-like format output with time and tag.
-    """
-    print(f"{prefix}[{tag}]", time.strftime("[%Y-%m-%d %H:%M:%S]", time.localtime()) + " " + "".join([str(s) for s in snippets]),
-          end=end)
-
-def time_string():
-    """ Generate a time string from year to second.
-    """
-    return time.strftime("%Y-%m-%d_%H-%M-%S", time.localtime())
 
 
 def tic_toc(func):
@@ -47,6 +38,21 @@ def tic_toc(func):
               (func.__name__, time.time() - tic))
         return res
     return wrapper
+
+
+# -------------------------------------- Basic Functions  --------------------------------------#
+def log(*snippets, end=None, tag="INFO", prefix=""):
+    """ Easily replace print function to get a log-like format output with time and tag.
+    """
+    print(f"{prefix}[{tag}]", time.strftime("[%Y-%m-%d %H:%M:%S]", time.localtime()) + " " + "".join([str(s) for s in snippets]),
+          end=end)
+
+
+def time_string():
+    """ Generate a time string from year to second.
+    """
+    return time.strftime("%Y-%m-%d_%H-%M-%S", time.localtime())
+
 
 def is_notebook():
     """ Retrun a boolean value showing whether the code now is running on jupyter notebook.

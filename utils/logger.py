@@ -16,7 +16,9 @@ import yaml
 import logging
 import logging.config
 
+from pathlib2 import Path
 from .basic import time_string
+from .sysinfo import SysInfo
 
 _package_directory = os.path.dirname(os.path.abspath(__file__))
 _default_config_path = os.path.join(_package_directory, "logger.yaml")
@@ -45,7 +47,11 @@ def setup_logging(override_level=None,
     Usage:
         `LOG_CFG=my_logging.yaml python my_server.py`
     """
-    default_log_file_path = f"/tmp/miracle_debug_{time_string()}.log"
+    system_info = SysInfo()
+    if system_info.is_linux or system_info.is_macos:
+        default_log_file_path = f"/tmp/miracle_debug_{time_string()}.log"
+    else:
+        default_log_file_path = str(Path.home() / "Downloads" / f"miracle_debug_{time_string()}.log")
     if log_file_path is not None:
         _parts = os.path.splitext(log_file_path)
         log_file_path = _parts[0]+"_"+time_string()+_parts[1]
