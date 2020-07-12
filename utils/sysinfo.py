@@ -11,6 +11,7 @@ import platform
 import re
 import sys
 from subprocess import PIPE, Popen
+from pathlib2 import Path
 
 import psutil
 
@@ -65,6 +66,11 @@ class SysInfo():
             prefix = os.path.dirname(sys.prefix)
             retval = (os.path.basename(prefix) == "envs")
         return retval
+
+    @property
+    def home(self):
+        """ str: The home directory of this machine."""
+        return str(Path.home())
 
     @property
     def ram_free(self):
@@ -152,7 +158,6 @@ class SysInfo():
     @property
     def cuda_version(self):
         """ str: The installed CUDA version. """
-        # TODO Handle multiple CUDA installs
         chk = Popen("nvcc -V", shell=True, stdout=PIPE, stderr=PIPE)
         stdout, stderr = chk.communicate()
         if not stderr:
