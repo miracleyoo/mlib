@@ -18,6 +18,7 @@ __all__ = ["host_values_selector", "make_new", "get_folder", "get_new_folder", "
 
 logger = logging.getLogger(__name__)
 
+
 def host_values_selector(misaka_value=None, gypsum_value=None, win_value=None, macos_value=None):
     """ Return a path which is compatible for multiple machines based on host name and platform.
     Args:
@@ -74,7 +75,7 @@ def get_new_folder(path):
     return str(new_path)
 
 
-make_new=get_new_folder(path)
+make_new = get_new_folder
 
 
 def get_folder(path):

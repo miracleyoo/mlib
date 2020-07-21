@@ -33,7 +33,7 @@ _str_logging_level = {"NOTSET": logging.NOTSET,
 __all__ = ["logging", "setup_logging"]
 
 
-def setup_logging(override_level=None,
+def setup_logging(level=None,
                   config_path=_default_config_path,
                   to_file=True,
                   log_file_path=None,
@@ -51,13 +51,14 @@ def setup_logging(override_level=None,
     if system_info.is_linux or system_info.is_macos:
         default_log_file_path = f"/tmp/miracle_debug_{time_string()}.log"
     else:
-        default_log_file_path = str(Path.home() / "Downloads" / f"miracle_debug_{time_string()}.log")
+        default_log_file_path = str(
+            Path.home() / "Downloads" / f"miracle_debug_{time_string()}.log")
     if log_file_path is not None:
         _parts = os.path.splitext(log_file_path)
         log_file_path = _parts[0]+"_"+time_string()+_parts[1]
 
-    if override_level is not None:
-        override_level = override_level.upper()
+    if level is not None:
+        level = level.upper()
 
     path = config_path
     value = os.getenv(env_key, None)
@@ -70,8 +71,8 @@ def setup_logging(override_level=None,
             config = yaml.load(f, Loader=yaml.Loader)
 
         # Modify the loaded logging config
-        if override_level is not None:
-            config["root"]["level"] = override_level
+        if level is not None:
+            config["root"]["level"] = level
         if to_file:
             config["root"]["handlers"].append("file_handler")
         log_file_path = default_log_file_path if log_file_path is None else log_file_path
@@ -81,7 +82,7 @@ def setup_logging(override_level=None,
         logging.config.dictConfig(config)
     else:
         # Init the basic stream handler
-        level = _default_level if override_level is not None else override_level
+        level = _default_level if level is not None else level
         logging.basicConfig(level=_str_logging_level[level])
 
         # Add the file log support

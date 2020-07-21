@@ -5,7 +5,7 @@ import subprocess as sp
 logger = logging.getLogger("Advanced Import")
 
 
-def install_if_not_exist(package_name, imported_name=None, import_name=None):
+def install_if_not_exist(package_name, scope, imported_name=None, import_name=None):
     if import_name is None:
         import_name = package_name
     if imported_name is None:
@@ -16,7 +16,7 @@ def install_if_not_exist(package_name, imported_name=None, import_name=None):
 
     try:
         module = importlib.import_module(import_name)
-        globals()[imported_name] = module
+        scope[imported_name] = module
     except ImportError as e:
         logger.exception(e)
         logger.info(f"Module {package_name} not installed. Installing...")

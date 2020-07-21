@@ -70,7 +70,7 @@ class PickleController(IOCenter):
 
         path = cls.process_path(path)
         with open(path, woptions) as f:
-            pkl.dump(obj, f)
+            pkl.dump(obj, f, **kwds)
 
     @classmethod
     def load(cls, path, roptions=None, **kwds):
@@ -79,7 +79,7 @@ class PickleController(IOCenter):
 
         if op.exists(path):
             with open(path, roptions) as f:
-                obj = pkl.load(f)
+                obj = pkl.load(f, **kwds)
             return obj
         else:
             raise FileNotFoundError(path)
@@ -98,7 +98,7 @@ class YAMLController(IOCenter):
 
         path = cls.process_path(path)
         with open(path, woptions) as f:
-            yaml.dump(obj, f)
+            yaml.dump(obj, f, **kwds)
 
     @classmethod
     def load(cls, path, roptions=None, **kwds):
@@ -107,7 +107,7 @@ class YAMLController(IOCenter):
 
         if op.exists(path):
             with open(path, roptions) as f:
-                obj = yaml.load(f, Loader=yaml.Loader)
+                obj = yaml.load(f, Loader=yaml.Loader, **kwds)
             return obj
         else:
             raise FileNotFoundError(path)
@@ -126,7 +126,7 @@ class JSONController(IOCenter):
 
         path = cls.process_path(path)
         with open(path, woptions) as f:
-            json.dump(obj, f)
+            json.dump(obj, f, **kwds)
 
     @classmethod
     def load(cls, path, roptions=None, **kwds):
@@ -135,7 +135,7 @@ class JSONController(IOCenter):
 
         if op.exists(path):
             with open(path, roptions) as f:
-                obj = json.load(f)
+                obj = json.load(f, **kwds)
             return obj
         else:
             raise FileNotFoundError(path)
@@ -159,7 +159,7 @@ class TXTController(IOCenter):
             elif is_1dlist(obj):
                 f.write("\n".join(str(item) for item in obj))
             else:
-                f.write(pprint.pformat(obj))
+                f.write(pprint.pformat(obj, **kwds))
 
     @classmethod
     def load(cls, path, roptions=None, **kwds):
@@ -181,12 +181,12 @@ class MATController(IOCenter):
     @classmethod
     def save(cls, obj, path, **kwds):
         path = cls.process_path(path)
-        sio.savemat(path, obj)
+        sio.savemat(path, obj, **kwds)
 
     @classmethod
     def load(cls, path, **kwds):
         if op.exists(path):
-            return sio.loadmat(path)
+            return sio.loadmat(path, **kwds)
         else:
             raise FileNotFoundError(path)
 
@@ -279,7 +279,7 @@ class AudioController(IOCenter):
         path = cls.process_path(path)
         if 'rate' not in locals():
             rate = 16000
-        af.write(path, signal=obj, sampling_rate=rate)
+        af.write(path, signal=obj, sampling_rate=rate, **kwds)
 
     @classmethod
     def load(cls, path, **kwds):
@@ -310,30 +310,30 @@ def selector(path, cls_type):
                 cls_type = suf
 
     if cls_type == "pickle":
-        install_if_not_exist(package_name="pickle", imported_name="pkl")
+        install_if_not_exist(package_name="pickle", imported_name="pkl", scope=globals())
         cont = PickleController()
     elif cls_type == "json":
-        install_if_not_exist(package_name="json")
+        install_if_not_exist(package_name="json", scope=globals())
         cont = JSONController()
     elif cls_type == "yaml":
-        install_if_not_exist(package_name="yaml")
+        install_if_not_exist(package_name="yaml", scope=globals())
         cont = YAMLController()
     elif cls_type == "txt":
-        install_if_not_exist(package_name="pprint")
+        install_if_not_exist(package_name="pprint", scope=globals())
         cont = TXTController()
     elif cls_type == "mat":
         install_if_not_exist(package_name="scipy",
-                             import_name="scipy.io", imported_name="sio")
+                             import_name="scipy.io", imported_name="sio", scope=globals())
         cont = MATController()
     elif cls_type == "excel":
-        install_if_not_exist(package_name="pandas", imported_name="pd")
+        install_if_not_exist(package_name="pandas", imported_name="pd", scope=globals())
         cont = ExcelController()
     elif cls_type == "audio":
-        install_if_not_exist(package_name="audiofile", imported_name="af")
+        install_if_not_exist(package_name="audiofile", imported_name="af", scope=globals())
         cont = AudioController()
     elif cls_type == "image":
         install_if_not_exist(package_name="pillow",
-                             import_name="PIL.Image", imported_name="Image")
+                             import_name="PIL.Image", imported_name="Image", scope=globals())
         cont = ImageController()
     elif cls_type == "video":
         cont = VideoController()

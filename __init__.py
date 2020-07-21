@@ -9,10 +9,12 @@ also included and loaded.
 """
 from functools import partial
 from pathlib2 import Path
-from mlib.lang.lazy_loader import LazyLoader
+from importlib import reload
+from mlib.lang import *
 
 from .utils.logger import *
 from .utils.basic import *
+
 
 _import_dict = {
     "os": "os",
@@ -20,20 +22,23 @@ _import_dict = {
     "time": "time",
     "math": "math",
     "yaml": "yaml",
+    "json": "json",
     "random": "random",
     "op": "os.path",
     "np": "numpy",
     "pd": "pandas",
     "pkl": "pickle",
     "glob": "glob",
+    "sp": "subprocess",
+    "mp": "multiprocessing",
 
-    "pf": "mlib.file.path_func",
-    "lang": "mlib.lang"
+    "mio": "mlib.file.io",
+    "pf": "mlib.file.path_func"
 }
 
 for key, value in _import_dict.items():
     exec(f"{key}=LazyLoader('{key}', globals(), '{value}')")
-
+    # globals()[key] = ''
 
 if is_notebook():
     tqdm = LazyLoader("tqdm", globals(), "tqdm.notebook")

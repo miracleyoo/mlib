@@ -20,12 +20,36 @@ class VideoReader:
                 faces are too small.
         """
         self.insets = insets
-        self.path = path
+        self._path = path
 
-    def set_path(self, path):
-        self.path = path
+    @property
+    def path(self):
+        return self._path
 
-    def read_metadata(self):
+    @path.setter
+    def path(self, path):
+        self._path = path
+
+    @property
+    def fps(self):
+        vidcap = cv2.VideoCapture(self._path)
+        fps = vidcap.get(cv2.CAP_PROP_FPS)
+        return fps
+
+    @property
+    def frame_num(self):
+        vidcap = cv2.VideoCapture(self._path)
+        return int(vidcap.get(cv2.CAP_PROP_FRAME_COUNT))
+
+    @property
+    def size(self):
+        vidcap = cv2.VideoCapture(self._path)
+        width = np.int32(vidcap.get(cv2.CAP_PROP_FRAME_WIDTH))  # float
+        height = np.int32(vidcap.get(cv2.CAP_PROP_FRAME_HEIGHT))  # float
+        return (width, height)
+
+    @property
+    def metadata(self):
         """Extract the necessary information from a video file.
 
         Returns:
@@ -34,13 +58,13 @@ class VideoReader:
             width: The frame width of the video.
             height: The frame height of the video.
         """
-        vidcap = cv2.VideoCapture(self.path)
+        vidcap = cv2.VideoCapture(self._path)
         frame_num = int(vidcap.get(cv2.CAP_PROP_FRAME_COUNT))
         fps = vidcap.get(cv2.CAP_PROP_FPS)
         width = np.int32(vidcap.get(cv2.CAP_PROP_FRAME_WIDTH))  # float
         height = np.int32(vidcap.get(cv2.CAP_PROP_FRAME_HEIGHT))  # float
         vidcap.release()
-        return fps, frame_num, width, height
+        return {"fps": fps, "frame_num": frame_num, "size": (width, height)}
 
     def read_frames(self, num_frames, jitter=0, seed=None):
         """Reads frames that are always evenly spaced throughout the video.
@@ -55,7 +79,7 @@ class VideoReader:
         """
         assert num_frames > 0
 
-        capture = cv2.VideoCapture(self.path)
+        capture = cv2.VideoCapture(self._path)
         frame_count = int(capture.get(cv2.CAP_PROP_FRAME_COUNT))
         if frame_count <= 0:
             return None
@@ -70,17 +94,17 @@ class VideoReader:
             frame_idxs = np.clip(
                 frame_idxs + jitter_offsets, 0, frame_count - 1)
 
-        result = self._read_frames_at_indices(self.path, capture, frame_idxs)
+        result = self._read_frames_at_indices(self._path, capture, frame_idxs)
         capture.release()
         return result
 
     def read_all_frames(self):
-        capture = cv2.VideoCapture(self.path)
+        capture = cv2.VideoCapture(self._path)
         frame_count = int(capture.get(cv2.CAP_PROP_FRAME_COUNT))
         if frame_count <= 0:
             return None
         frame_idxs = np.arange(frame_count)
-        result = self._read_frames_at_indices(self.path, capture, frame_idxs)
+        result = self._read_frames_at_indices(self._path, capture, frame_idxs)
         capture.release()
         return result
 
@@ -94,14 +118,14 @@ class VideoReader:
         assert num_frames > 0
         np.random.seed(seed)
 
-        capture = cv2.VideoCapture(self.path)
+        capture = cv2.VideoCapture(self._path)
         frame_count = int(capture.get(cv2.CAP_PROP_FRAME_COUNT))
         if frame_count <= 0:
             return None
 
         frame_idxs = sorted(np.random.choice(
             np.arange(0, frame_count), num_frames))
-        result = self._read_frames_at_indices(self.path, capture, frame_idxs)
+        result = self._read_frames_at_indices(self._path, capture, frame_idxs)
 
         capture.release()
         return result
@@ -125,8 +149,8 @@ class VideoReader:
         frames were read.
         """
         assert len(frame_idxs) > 0
-        capture = cv2.VideoCapture(self.path)
-        result = self._read_frames_at_indices(self.path, capture, frame_idxs)
+        capture = cv2.VideoCapture(self._path)
+        result = self._read_frames_at_indices(self._path, capture, frame_idxs)
         capture.release()
         return result
 
@@ -167,10 +191,10 @@ class VideoReader:
 
     def read_middle_frame(self):
         """Reads the frame from the middle of the video."""
-        capture = cv2.VideoCapture(self.path)
+        capture = cv2.VideoCapture(self._path)
         frame_count = int(capture.get(cv2.CAP_PROP_FRAME_COUNT))
         result = self._read_frame_at_index(
-            self.path, capture, frame_count // 2)
+            self._path, capture, frame_count // 2)
         capture.release()
         return result
 
@@ -189,8 +213,8 @@ class VideoReader:
         Returns a NumPy array of shape (1, H, W, 3) and the index of the frame,
         or None if reading failed.
         """
-        capture = cv2.VideoCapture(self.path)
-        result = self._read_frame_at_index(self.path, capture, frame_idx)
+        capture = cv2.VideoCapture(self._path)
+        result = self._read_frame_at_index(self._path, capture, frame_idx)
         capture.release()
         return result
 
