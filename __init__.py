@@ -8,6 +8,7 @@ Also, some frequently used package abbreviation inside mlib is
 also included and loaded.
 """
 from functools import partial
+from collections import namedtuple, OrderedDict
 from pathlib2 import Path
 from importlib import reload
 from mlib.lang import *

@@ -3,17 +3,18 @@ Library providing convenient classes and methods for saving and loading all type
 """
 import os
 import sys
-
+import cv2
 import os.path as op
 
 from . import path_func as pf
 from ..lang.adv_import import install_if_not_exist
 from ..cv.video.video_reader import VideoReader
 from ..cv.video.video_generator import gen_video
+from ..cv.image.image import cv2_read_img
 
-__all__ = ["save", "load", "write", "read", "dump"]
+__all__ = ["save", "load", "write", "read", "dump", "suffix_map"]
 
-_suffix_map = {
+suffix_map = {
     "pickle": ["pkl", "p", "pickle"],
     "json":   ["json"],
     "yaml":   ["yaml", "yml"],
@@ -44,7 +45,7 @@ class IOCenter(object):
     @classmethod
     def process_path(cls, path):
         pf.get_folder(op.split(path)[0])
-        if pf.suffix(path).strip(".") not in _suffix_map[cls.cls_type]:
+        if pf.suffix(path).strip(".") not in suffix_map[cls.cls_type]:
             path = f"{op.splitext(path)[0]}.{cls.ext}"
         return path
 
@@ -220,19 +221,39 @@ class ExcelController(IOCenter):
 
 
 class ImageController(IOCenter):
+    """ Controller for image files.
+    Args:
+        via: The method you choose to load the file. 
+            You can specify "cv2" or "pillow".
+
+    """
     ext = "jpg"
     cls_type = "image"
 
     @classmethod
-    def save(cls, obj, path, **kwds):
-        assert hasattr(obj, "save")
+    def save(cls, obj, path, via="cv2", cvt_rgb=True, **kwds):
         path = cls.process_path(path)
-        obj.save(path, **kwds)
+        if via == "cv2":
+            if cvt_rgb and len(obj.shape)>=3:
+                obj = cv2.cvtColor(obj, cv2.COLOR_RGB2BGR)
+            cv2.imwrite(path, obj, **kwds)
+        elif via == "pillow":
+            assert hasattr(obj, "save")
+            obj.save(path, **kwds)
+        else:
+            raise ValueError("Wrong via type! Please choose cv2 or pillow.")
 
     @classmethod
-    def load(cls, path, **kwds):
+    def load(cls, path, via="cv2", **kwds):
         if op.exists(path):
-            return Image.open(path, **kwds)
+            if via == "cv2":
+                return cv2_read_img(path, **kwds)
+            elif via == "pillow":
+                return Image.open(path, **kwds)
+            else:
+                raise ValueError(
+                    "Wrong via type! Please choose cv2 or pillow.")
+
         else:
             raise FileNotFoundError(path)
 
@@ -304,13 +325,14 @@ class AudioController(IOCenter):
 
 def selector(path, cls_type):
     if cls_type is None:
-        suffix = pf.suffix(path).strip(".")
-        for suf in _suffix_map.keys():
-            if suffix in _suffix_map[suf]:
+        suffix = pf.suffix(path).strip(".").lower()
+        for suf in suffix_map.keys():
+            if suffix in suffix_map[suf]:
                 cls_type = suf
 
     if cls_type == "pickle":
-        install_if_not_exist(package_name="pickle", imported_name="pkl", scope=globals())
+        install_if_not_exist(package_name="pickle",
+                             imported_name="pkl", scope=globals())
         cont = PickleController()
     elif cls_type == "json":
         install_if_not_exist(package_name="json", scope=globals())
@@ -326,14 +348,17 @@ def selector(path, cls_type):
                              import_name="scipy.io", imported_name="sio", scope=globals())
         cont = MATController()
     elif cls_type == "excel":
-        install_if_not_exist(package_name="pandas", imported_name="pd", scope=globals())
+        install_if_not_exist(package_name="pandas",
+                             imported_name="pd", scope=globals())
         cont = ExcelController()
     elif cls_type == "audio":
-        install_if_not_exist(package_name="audiofile", imported_name="af", scope=globals())
+        install_if_not_exist(package_name="audiofile",
+                             imported_name="af", scope=globals())
         cont = AudioController()
     elif cls_type == "image":
         install_if_not_exist(package_name="pillow",
                              import_name="PIL.Image", imported_name="Image", scope=globals())
+
         cont = ImageController()
     elif cls_type == "video":
         cont = VideoController()

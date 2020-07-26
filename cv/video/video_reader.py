@@ -1,10 +1,14 @@
 import os
+import os.path as op
 import cv2
 import logging
 import numpy as np
+from collections import namedtuple
+
+import mlib.file.path_func as pf
 
 logger = logging.getLogger(__name__)
-
+Size = namedtuple("Size", ["height", "width"])
 
 class VideoReader:
     """Helper class for reading one or more frames from a video file."""
@@ -46,7 +50,7 @@ class VideoReader:
         vidcap = cv2.VideoCapture(self._path)
         width = np.int32(vidcap.get(cv2.CAP_PROP_FRAME_WIDTH))  # float
         height = np.int32(vidcap.get(cv2.CAP_PROP_FRAME_HEIGHT))  # float
-        return (width, height)
+        return Size(height, width)
 
     @property
     def metadata(self):
@@ -64,9 +68,9 @@ class VideoReader:
         width = np.int32(vidcap.get(cv2.CAP_PROP_FRAME_WIDTH))  # float
         height = np.int32(vidcap.get(cv2.CAP_PROP_FRAME_HEIGHT))  # float
         vidcap.release()
-        return {"fps": fps, "frame_num": frame_num, "size": (width, height)}
+        return {"fps": fps, "frame_num": frame_num, "size": Size(height, width)}
 
-    def read_frames(self, num_frames, jitter=0, seed=None):
+    def read_isometric_frames(self, num_frames, jitter=0, seed=None):
         """Reads frames that are always evenly spaced throughout the video.
 
         Arguments:
@@ -108,6 +112,27 @@ class VideoReader:
         capture.release()
         return result
 
+    def to_images(self):
+        capture = cv2.VideoCapture(self._path)
+        frame_count = int(capture.get(cv2.CAP_PROP_FRAME_COUNT))
+        if frame_count <= 0:
+            return None
+
+        output_root = pf.get_folder(
+                op.join(*op.split(self.path)[:-1], pf.stem(self.path)))
+
+        count = 0
+        while capture.isOpened():
+            success, image = capture.read()
+            if success:
+                cv2.imwrite(os.path.join(output_root, '%d.png') % count, image)
+                count += 1
+            else:
+                break
+        cv2.destroyAllWindows()
+        capture.release()
+
+
     def read_random_frames(self, num_frames, seed=None):
         """Picks the frame indices at random.
 
@@ -119,7 +144,7 @@ class VideoReader:
         np.random.seed(seed)
 
         capture = cv2.VideoCapture(self._path)
-        frame_count = int(capture.get(cv2.CAP_PROP_FRAME_COUNT))
+        frame_count = self.frame_num
         if frame_count <= 0:
             return None
 
@@ -198,7 +223,7 @@ class VideoReader:
         capture.release()
         return result
 
-    def read_frame_at_index(self, frame_idx):
+    def read_frame_at_index(self, frame_idx, complete=False):
         """Reads a single frame from a video.
 
         If you just want to read a single frame from the video, this is more
@@ -210,11 +235,35 @@ class VideoReader:
         the decoder still needs to read all the previous frames in order to 
         reconstruct the one you're asking for.
 
-        Returns a NumPy array of shape (1, H, W, 3) and the index of the frame,
-        or None if reading failed.
+        Args:
+            frame_idx: Integer. The index of the frame you are going to read.
+            complete: Boolean. If "complete", returns a NumPy array of shape 
+                (1, H, W, 3) and the index of the frame, else return a NumPy 
+                array of shape (H, W, 3) only. Or None if reading failed.
         """
         capture = cv2.VideoCapture(self._path)
         result = self._read_frame_at_index(self._path, capture, frame_idx)
+        if not complete:
+            result = result[0][0]
+        capture.release()
+        return result
+
+    def read_random_frame(self, complete=False, seed=None):
+        """ Read a random frame from a video.
+
+        Args:
+            complete: Boolean. If "complete", returns a NumPy array of shape 
+                (1, H, W, 3) and the index of the frame, else return a NumPy 
+                array of shape (H, W, 3) only. Or None if reading failed.
+        """
+        np.random.seed(seed)
+        capture = cv2.VideoCapture(self._path)
+
+        frame_idx = np.random.choice(range(self.frame_num))
+        result = self._read_frame_at_index(self._path, capture, frame_idx)
+        if not complete:
+            result = result[0][0]
+
         capture.release()
         return result
 

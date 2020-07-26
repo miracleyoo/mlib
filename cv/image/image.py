@@ -5,7 +5,7 @@ from PIL import Image
 from hashlib import sha1
 
 
-def get_cv_img(img, cvt_rgb=True, force_color=False):
+def get_cv_img(img, cvt_rgb=True):
     """Convert the input to an OpenCV image.
     Args:
         img: A string, a PIL.Image object, or an OpenCV image
@@ -13,7 +13,7 @@ def get_cv_img(img, cvt_rgb=True, force_color=False):
         An OpenCV format, RGB channel ordered image
     """
     if isinstance(img, str):
-        img = cv2_read_img(img, cvt_rgb=True, force_color=False)
+        img = cv2_read_img(img, cvt_rgb=True)
     elif isinstance(img, np.ndarray):
         pass
     else:
@@ -25,22 +25,18 @@ def get_cv_img(img, cvt_rgb=True, force_color=False):
     return img
 
 
-def cv2_read_img(filename, raise_error=False, cvt_rgb=True, force_color=False):
+def cv2_read_img(filename, raise_error=False, cvt_rgb=True):
     """ Read an image with cv2 and check that an image was actually loaded.
         Logs an error if the image returned is None. or an error has occured.
         Pass raise_error=True if error should be raised """
     logger = logging.getLogger(__name__)  # pylint:disable=invalid-name
-    logger.trace("Requested image: '%s'", filename)
+    logger.debug("Requested image: '{filename}'")
     success = True
     image = None
     try:
-        if force_color:
-            image = cv2.imread(filename, cv2.IMREAD_COLOR)
-        else:
-            image = cv2.imread(
-                filename)  # pylint:disable=no-member,c-extension-no-member
-        if cvt_rgb:
-            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        image = cv2.imdecode(np.fromfile(filename, dtype=np.uint8), -1)
+        if cvt_rgb and len(image.shape)>=3:
+            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         if image is None:
             raise ValueError
     except TypeError:
@@ -63,7 +59,7 @@ def cv2_read_img(filename, raise_error=False, cvt_rgb=True, force_color=False):
         logger.error(msg)
         if raise_error:
             raise Exception(msg)
-    logger.trace("Loaded image: '%s'. Success: %s", filename, success)
+    logger.debug("Loaded image: '%s'. Success: %s", filename, success)
     return image
 
 
@@ -135,7 +131,7 @@ def hash_image_file(filename):
     logger = logging.getLogger(__name__)  # pylint:disable=invalid-name
     img = cv2_read_img(filename, raise_error=True)
     img_hash = sha1(img).hexdigest()
-    logger.trace("filename: '%s', hash: %s", filename, img_hash)
+    logger.debug("filename: '%s', hash: %s", filename, img_hash)
     return img_hash
 
 

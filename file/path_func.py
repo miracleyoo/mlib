@@ -130,7 +130,7 @@ def stem(path):
 
 
 def suffix(path):
-    return os.path.splitext(os.path.basename(path))[1]
+    return os.path.splitext(os.path.basename(path))[1].lstrip(".").lower()
 
 
 def listdir(path,
