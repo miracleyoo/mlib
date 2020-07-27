@@ -1,0 +1,4 @@
+""" Multispectral Image Processing Library.
+
+"""
+
