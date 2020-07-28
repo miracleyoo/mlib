@@ -23,9 +23,11 @@ __all__ = ["MultiSpectralDecoder"]
 
 
 class MultiSpectralDecoder():
-    def __init__(self, path=None, output_root=None, row_band_num=5, col_band_num=5):
+    def __init__(self, path=None, output_root=None, row_band_num=5, col_band_num=5, wave_lengthes=_wavelength):
         self.row_band_num = row_band_num
         self.col_band_num = col_band_num
+        self.wave_lengthes = wave_lengthes
+
         self.splited = None
         self.video_handler = None
         self.img = None
@@ -62,6 +64,13 @@ class MultiSpectralDecoder():
             raise TypeError("Please set the path to an image or video file!")
 
     def band(self, index):
+        """ Return a certain band's splitted image.
+
+        Args:
+            index -> int: The band of channel index. If the pixel is saved in
+                (5x5) format in the image, band(11) means the band in (3, 2).
+            index -> list/tuple: The coordinate of the target band. Like (3, 2)
+        """
         if self.splited is not None:
             if isinstance(index, int):
                 return self.splited[index//self.col_band_num][index % self.col_band_num]
@@ -74,6 +83,11 @@ class MultiSpectralDecoder():
                 "Please call split_image or split_video at first!")
 
     def _split_frame(self, frame):
+        """ The actual function that performs the image splition.
+
+        Args:
+            frame: An input image. It should be loaded using cv2.
+        """
         split_frames = []
         dim = len(frame.shape)
         for row in range(self.row_band_num):
@@ -92,6 +106,18 @@ class MultiSpectralDecoder():
         return split_frames
 
     def split_video(self, path=None, frames_chunk_size=3600, max_frames=4500):
+        """ Split a video into videos with different bands.
+
+        If the video frame number is larger than the max_frames, it will be automatically
+        splited into different "parts", and the output name will be something like:
+        632nm_band13_part1.avi This is due to the large file size of MSI videos and the
+        system memory cannot hold the whole video in many cases.
+
+        Args:
+            path: The path of a multispectral video.
+            frame_chunk_size: The frame number for each temperally splited video.
+            max_frames: The maximum frame number for a video to avoid temperal splition.
+        """
         if path is not None:
             self.path = path
         if self.path is None:
@@ -127,9 +153,16 @@ class MultiSpectralDecoder():
                     temp_frames = np.vstack(temp_frames)
                     band_num = row*self.col_band_num+col
                     gen_video(
-                        op.join(output_root, f"{_wavelength[row][col]}nm_band{band_num}_part{idx}.avi"), temp_frames, self.video_handler.fps)
+                        op.join(output_root, f"{self.wave_lengthes[row][col]}nm_band{band_num}_part{idx}.avi"), temp_frames, self.video_handler.fps)
 
-    def split_video_frame_at_index(self, frame_idx=0, path="", save=False):
+    def split_frame_at_index(self, frame_idx=0, path=None, save=False):
+        """ Split one frame at a certain index in the video.
+
+        Args:
+            frame_idx: The index of the frame you want to split.
+            path: The path of a multispectral video.
+            save: Whether you want to save the splitted frame to image files.
+        """
         if path is not None:
             self.path = path
         if self.path is None:
@@ -142,7 +175,13 @@ class MultiSpectralDecoder():
         if save:
             self._save_splitted_images()
 
-    def split_image(self, path="", save=False):
+    def split_image(self, path=None, save=False):
+        """ Split one msi image.
+
+        Args:
+            path: The path of a multispectral video.
+            save: Whether you want to save the splitted frame to image files.
+        """
         if path is not None:
             self.path = path
         if self.path is None:
@@ -154,6 +193,8 @@ class MultiSpectralDecoder():
             self._save_splitted_images()
 
     def _save_splitted_images(self):
+        """ Save the splitted images to files.
+        """
         if self.output_root is None:
             output_root = pf.get_folder(
                 op.join(*op.split(self.path)[:-1], pf.stem(self.path)))
@@ -165,4 +206,4 @@ class MultiSpectralDecoder():
             for col in range(self.col_band_num):
                 band_num = row*self.col_band_num+col
                 mio.save(self.splited[row][col], op.join(
-                    output_root, f"{_wavelength[row][col]}nm_band{band_num}.png"))
+                    output_root, f"{self.wave_lengthes[row][col]}nm_band{band_num}.png"))
