@@ -1,8 +1,10 @@
 import cv2
 import logging
 import numpy as np
-from PIL import Image
 from hashlib import sha1
+
+__all__ = ["get_cv_img", "cv2_read_img", "crop_by_box", "constrain_box",
+           "bounding_box_rec2square", "resize", "hash_encode_image", "hash_image_file"]
 
 
 def get_cv_img(img, cvt_rgb=True):
@@ -35,7 +37,7 @@ def cv2_read_img(filename, raise_error=False, cvt_rgb=True):
     image = None
     try:
         image = cv2.imdecode(np.fromfile(filename, dtype=np.uint8), -1)
-        if cvt_rgb and len(image.shape)>=3:
+        if cvt_rgb and len(image.shape) >= 3:
             image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         if image is None:
             raise ValueError
@@ -123,7 +125,7 @@ def resize(img, dim):
         img: The input image
         dim: (width, height)
     """
-    return cv2.resize(load_cv_img(img), dim, interpolation=cv2.INTER_AREA)
+    return cv2.resize(img, dim, interpolation=cv2.INTER_AREA)
 
 
 def hash_image_file(filename):

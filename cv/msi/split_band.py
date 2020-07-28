@@ -1,7 +1,9 @@
 import cv2
+import logging
 import numpy as np
 import os.path as op
 from collections import namedtuple
+from math import ceil
 
 import mlib.file.io as mio
 import mlib.file.path_func as pf
@@ -15,19 +17,24 @@ _wavelength = [[856, 872, 840, 824, 974],
                [910, 926, 894, 888, 958],
                [792, 808, 776, 760, 942]]
 
+logger = logging.getLogger(__name__)
+
+__all__ = ["MultiSpectralDecoder"]
+
 
 class MultiSpectralDecoder():
-    def __init__(self, row_band_num=5, col_band_num=5, path="", output_root=None):
+    def __init__(self, path=None, output_root=None, row_band_num=5, col_band_num=5):
         self.row_band_num = row_band_num
         self.col_band_num = col_band_num
         self.splited = None
         self.video_handler = None
         self.img = None
         self.frame_size = None
+        self._path = None
+        self._output_root = None
 
-        self._path = ""
-        self._output_root = ""
-        self.path = path
+        if path is not None:
+            self.path = path
         self.output_root = output_root
 
     @property
@@ -84,45 +91,48 @@ class MultiSpectralDecoder():
             split_frames.append(temp)
         return split_frames
 
-    def split_video(self, path=""):
-        if path != "":
+    def split_video(self, path=None, frames_chunk_size=3600, max_frames=4500):
+        if path is not None:
             self.path = path
-            if pf.suffix(path) in mio.suffix_map["video"]:
-                self.video_handler = mio.load(path)
-            else:
-                raise ValueError("Please set the path to an video file.")
-        elif self.path == "":
+        if self.path is None:
             raise ValueError("Please specify a path at first!")
 
         if self.output_root is None:
             output_root = pf.get_folder(
                 op.join(*op.split(self.path)[:-1], pf.stem(self.path)))
         else:
-            output_root = pf.get_folder(op.join(self.output_root, pf.stem(self.path)))
+            output_root = pf.get_folder(
+                op.join(self.output_root, pf.stem(self.path)))
+
+        frame_number = self.video_handler.frame_num
+        if frame_number < max_frames:
+            ranges = [range(frame_number)]
+        else:
+            ranges = [range(i*frames_chunk_size, min((i+1)*frames_chunk_size, frame_number))
+                      for i in range(ceil(frame_number/frames_chunk_size))]
+
+        logger.info(f"This video is divided into {len(ranges)} parts.")
 
         split_temp = []
-        for frame_idx in range(self.video_handler.frame_num):
-            frame = self.video_handler.read_frame_at_index(
-                frame_idx, complete=True)[0]
-            split_temp.append(self._split_frame(frame))
+        for idx, range_item in enumerate(ranges):
+            for frame_idx in range_item:
+                frame = self.video_handler.read_frame_at_index(
+                    frame_idx, complete=True)[0]
+                split_temp.append(self._split_frame(frame))
 
-        for row in range(self.row_band_num):
-            for col in range(self.col_band_num):
-                temp_frames = [split_temp[i][row][col]
-                               for i in range(self.video_handler.frame_num)]
-                temp_frames = np.vstack(temp_frames)
-                band_num = row*self.col_band_num+col
-                gen_video(
-                    op.join(output_root, f"{_wavelength[row][col]}nm_band{band_num}.avi"), temp_frames, self.video_handler.fps)
+            for row in range(self.row_band_num):
+                for col in range(self.col_band_num):
+                    temp_frames = [split_temp[i][row][col]
+                                   for i in range(len(range_item))]
+                    temp_frames = np.vstack(temp_frames)
+                    band_num = row*self.col_band_num+col
+                    gen_video(
+                        op.join(output_root, f"{_wavelength[row][col]}nm_band{band_num}_part{idx}.avi"), temp_frames, self.video_handler.fps)
 
     def split_video_frame_at_index(self, frame_idx=0, path="", save=False):
-        if path != "":
+        if path is not None:
             self.path = path
-            if pf.suffix(path) in mio.suffix_map["video"]:
-                self.video_handler = mio.load(path)
-            else:
-                raise ValueError("Please set the path to an video file.")
-        elif self.path == "":
+        if self.path is None:
             raise ValueError("Please specify a path at first!")
 
         assert isinstance(frame_idx, int)
@@ -133,13 +143,9 @@ class MultiSpectralDecoder():
             self._save_splitted_images()
 
     def split_image(self, path="", save=False):
-        if path != "":
+        if path is not None:
             self.path = path
-            if pf.suffix(path) in mio.suffix_map["image"]:
-                self.img = mio.load(path)
-            else:
-                raise ValueError("Please set the path to an image file.")
-        elif self.path == "":
+        if self.path is None:
             raise ValueError("Please specify a path at first!")
 
         self.splited = self._split_frame(self.img)
@@ -152,7 +158,8 @@ class MultiSpectralDecoder():
             output_root = pf.get_folder(
                 op.join(*op.split(self.path)[:-1], pf.stem(self.path)))
         else:
-            output_root = pf.get_folder(op.join(self.output_root, pf.stem(self.path)))
+            output_root = pf.get_folder(
+                op.join(self.output_root, pf.stem(self.path)))
 
         for row in range(self.row_band_num):
             for col in range(self.col_band_num):

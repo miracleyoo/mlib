@@ -2,3 +2,4 @@
 
 """
 
+from .split_band import MultiSpectralDecoder

@@ -2,13 +2,16 @@ import os
 import os.path as op
 import cv2
 import logging
+import datetime
 import numpy as np
+
 from collections import namedtuple
 
 import mlib.file.path_func as pf
 
 logger = logging.getLogger(__name__)
 Size = namedtuple("Size", ["height", "width"])
+
 
 class VideoReader:
     """Helper class for reading one or more frames from a video file."""
@@ -17,13 +20,17 @@ class VideoReader:
         """Creates a new VideoReader.
 
         Arguments:
-            insets: amount to inset the image by, as a percentage of 
-                (width, height). This lets you "zoom in" to an image 
-                to remove unimportant content around the borders. 
-                Useful for face detection, which may not work if the 
+            insets: amount to inset the image by, as a percentage of
+                (width, height). This lets you "zoom in" to an image
+                to remove unimportant content around the borders.
+                Useful for face detection, which may not work if the
                 faces are too small.
         """
         self.insets = insets
+        self._frame_num = None
+        self._fps = None
+        self._size = None
+        self._meta = None
         self._path = path
 
     @property
@@ -33,24 +40,41 @@ class VideoReader:
     @path.setter
     def path(self, path):
         self._path = path
+        self._frame_num = None
+        self._fps = None
+        self._size = None
+        self._meta = None
 
     @property
     def fps(self):
-        vidcap = cv2.VideoCapture(self._path)
-        fps = vidcap.get(cv2.CAP_PROP_FPS)
-        return fps
+        if self._fps is None:
+            vidcap = cv2.VideoCapture(self._path)
+            self._fps = vidcap.get(cv2.CAP_PROP_FPS)
+        return self._fps
 
     @property
     def frame_num(self):
-        vidcap = cv2.VideoCapture(self._path)
-        return int(vidcap.get(cv2.CAP_PROP_FRAME_COUNT))
+        if self._frame_num is None:
+            vidcap = cv2.VideoCapture(self._path)
+            self._frame_num = int(vidcap.get(cv2.CAP_PROP_FRAME_COUNT))
+        return self._frame_num
+
+    @property
+    def seconds(self):
+        return self.frame_num/self.fps
+
+    @property
+    def time_string(self):
+        return str(datetime.timedelta(seconds=self.seconds))
 
     @property
     def size(self):
-        vidcap = cv2.VideoCapture(self._path)
-        width = np.int32(vidcap.get(cv2.CAP_PROP_FRAME_WIDTH))  # float
-        height = np.int32(vidcap.get(cv2.CAP_PROP_FRAME_HEIGHT))  # float
-        return Size(height, width)
+        if self._size is None:
+            vidcap = cv2.VideoCapture(self._path)
+            width = np.int32(vidcap.get(cv2.CAP_PROP_FRAME_WIDTH))  # float
+            height = np.int32(vidcap.get(cv2.CAP_PROP_FRAME_HEIGHT))  # float
+            self._size = Size(height, width)
+        return self._size
 
     @property
     def metadata(self):
@@ -62,13 +86,16 @@ class VideoReader:
             width: The frame width of the video.
             height: The frame height of the video.
         """
-        vidcap = cv2.VideoCapture(self._path)
-        frame_num = int(vidcap.get(cv2.CAP_PROP_FRAME_COUNT))
-        fps = vidcap.get(cv2.CAP_PROP_FPS)
-        width = np.int32(vidcap.get(cv2.CAP_PROP_FRAME_WIDTH))  # float
-        height = np.int32(vidcap.get(cv2.CAP_PROP_FRAME_HEIGHT))  # float
-        vidcap.release()
-        return {"fps": fps, "frame_num": frame_num, "size": Size(height, width)}
+        if self._meta is None:
+            vidcap = cv2.VideoCapture(self._path)
+            frame_num = int(vidcap.get(cv2.CAP_PROP_FRAME_COUNT))
+            fps = vidcap.get(cv2.CAP_PROP_FPS)
+            width = np.int32(vidcap.get(cv2.CAP_PROP_FRAME_WIDTH))  # float
+            height = np.int32(vidcap.get(cv2.CAP_PROP_FRAME_HEIGHT))  # float
+            vidcap.release()
+            self._meta = {"fps": fps, "frame_num": frame_num,
+                          "size": Size(height, width)}
+        return self._meta
 
     def read_isometric_frames(self, num_frames, jitter=0, seed=None):
         """Reads frames that are always evenly spaced throughout the video.
@@ -119,7 +146,7 @@ class VideoReader:
             return None
 
         output_root = pf.get_folder(
-                op.join(*op.split(self.path)[:-1], pf.stem(self.path)))
+            op.join(*op.split(self.path)[:-1], pf.stem(self.path)))
 
         count = 0
         while capture.isOpened():
@@ -131,7 +158,6 @@ class VideoReader:
                 break
         cv2.destroyAllWindows()
         capture.release()
-
 
     def read_random_frames(self, num_frames, seed=None):
         """Picks the frame indices at random.
