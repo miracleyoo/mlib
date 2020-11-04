@@ -105,7 +105,7 @@ class MultiSpectralDecoder():
             split_frames.append(temp)
         return split_frames
 
-    def split_video(self, path=None, frames_chunk_size=3600, max_frames=4500):
+    def split_video(self, path=None, frames_chunk_size=1800, max_frames=2700):
         """ Split a video into videos with different bands.
 
         If the video frame number is larger than the max_frames, it will be automatically
@@ -139,6 +139,13 @@ class MultiSpectralDecoder():
 
         logger.info(f"This video is divided into {len(ranges)} parts.")
 
+        if len(ranges) > 1:
+            for row in range(self.row_band_num):
+                for col in range(self.col_band_num):
+                    band_num = row*self.col_band_num+col
+                    pf.get_folder(op.join(output_root,
+                                          f"{self.wave_lengthes[row][col]}nm_band{band_num}"))
+
         split_temp = []
         for idx, range_item in enumerate(ranges):
             for frame_idx in range_item:
@@ -152,8 +159,13 @@ class MultiSpectralDecoder():
                                    for i in range(len(range_item))]
                     temp_frames = np.vstack(temp_frames)
                     band_num = row*self.col_band_num+col
-                    gen_video(
-                        op.join(output_root, f"{self.wave_lengthes[row][col]}nm_band{band_num}_part{idx}.avi"), temp_frames, self.video_handler.fps)
+                    if len(ranges) > 1:
+                        output_path = op.join(
+                            output_root, f"{self.wave_lengthes[row][col]}nm_band{band_num}", f"{idx}.avi")
+                    else:
+                        output_path = op.join(
+                            output_root, f"{self.wave_lengthes[row][col]}nm_band{band_num}_part{idx}.avi")
+                    gen_video(output_path, temp_frames, self.video_handler.fps)
 
     def split_frame_at_index(self, frame_idx=0, path=None, save=False):
         """ Split one frame at a certain index in the video.

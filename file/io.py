@@ -15,7 +15,7 @@ from ..cv.image.image import cv2_read_img
 __all__ = ["save", "load", "write", "read", "dump", "suffix_map"]
 
 suffix_map = {
-    "pickle": ["pkl", "p", "pickle"],
+    "pickle": ["pkl", "p", "pickle", "pt"],
     "json":   ["json"],
     "yaml":   ["yaml", "yml"],
     "txt":    ["txt", "log", ""],
