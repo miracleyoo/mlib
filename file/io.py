@@ -23,7 +23,8 @@ suffix_map = {
     "mat":    ["mat"],
     "image":  ["jpg", "jpeg", "png", "bmp", "tif", "tiff"],
     "audio":  ["mp3", "wav", "aac", "flac"],
-    "video":  ["mp4", "avi", "mov", "mkv", "flv", "webm"]
+    "video":  ["mp4", "avi", "mov", "mkv", "flv", "webm"],
+    "numpy":  ["np", "npy", "npz"]
 }
 
 
@@ -81,6 +82,26 @@ class PickleController(IOCenter):
         if op.exists(path):
             with open(path, roptions) as f:
                 obj = pkl.load(f, **kwds)
+            return obj
+        else:
+            raise FileNotFoundError(path)
+
+
+class NumpyController(IOCenter):
+    ext = "npz"
+    cls_type = "numpy"
+    woptions = "wb"
+    roptions = "rb"
+
+    @classmethod
+    def save(cls, obj, path, woptions=None, **kwds):
+        path = cls.process_path(path)
+        np.save(path, obj, **kwds)
+
+    @classmethod
+    def load(cls, path, roptions=None, **kwds):
+        if op.exists(path):
+            obj = np.load(path)
             return obj
         else:
             raise FileNotFoundError(path)
@@ -334,6 +355,10 @@ def selector(path, cls_type):
         install_if_not_exist(package_name="pickle",
                              imported_name="pkl", scope=globals())
         cont = PickleController()
+    elif cls_type == "numpy":
+        install_if_not_exist(package_name="numpy",
+                             imported_name="np", scope=globals())
+        cont = NumpyController()
     elif cls_type == "json":
         install_if_not_exist(package_name="json", scope=globals())
         cont = JSONController()
@@ -370,6 +395,7 @@ def selector(path, cls_type):
 
 
 def save(obj, path, woptions=None, cls_type=None, **kwds):
+    path = str(path)
     cont = selector(path, cls_type)
     if woptions is not None:
         cont.save(obj, path, woptions=woptions, **kwds)
@@ -378,6 +404,7 @@ def save(obj, path, woptions=None, cls_type=None, **kwds):
 
 
 def load(path, roptions=None, cls_type=None, **kwds):
+    path = str(path)
     cont = selector(path, cls_type)
     if roptions is not None:
         return cont.load(path, roptions=roptions, **kwds)
