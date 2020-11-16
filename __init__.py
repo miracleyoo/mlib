@@ -16,6 +16,8 @@ from mlib.lang import *
 from .utils.logger import *
 from .utils.basic import *
 
+import file
+
 
 _import_dict = {
     "os": "os",
