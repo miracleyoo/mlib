@@ -1,13 +1,15 @@
 """
 Library providing convenient classes and methods for saving and loading all types of files.
 """
-import os
-import sys
 import cv2
 import os.path as op
 
 from . import path_func as pf
 from ..lang.adv_import import install_if_not_exist
+
+from ..cv.image.image import cv2_read_img
+from ..cv.video.video_reader import VideoReader
+from ..cv.video.video_generator import gen_video
 
 __all__ = ["save", "load", "write", "read", "dump", "suffix_map"]
 
@@ -378,14 +380,11 @@ def selector(path, cls_type):
                              imported_name="af", scope=globals())
         cont = AudioController()
     elif cls_type == "image":
-        from ..cv.image.image import cv2_read_img
         install_if_not_exist(package_name="pillow",
                              import_name="PIL.Image", imported_name="Image", scope=globals())
 
         cont = ImageController()
     elif cls_type == "video":
-        from ..cv.video.video_reader import VideoReader
-        from ..cv.video.video_generator import gen_video
         cont = VideoController()
     else:
         raise TypeError(

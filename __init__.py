@@ -36,7 +36,9 @@ _import_dict = {
     "mp": "multiprocessing",
 
     "mio": "mlib.file.io",
+    "mcv": "mlib.cv",
     "pf": "mlib.file.path_func"
+    
 }
 
 for key, value in _import_dict.items():
