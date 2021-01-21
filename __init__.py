@@ -16,7 +16,7 @@ from mlib.lang import *
 from .utils.logger import *
 from .utils.basic import *
 
-from . import file
+from mlib import file
 
 
 _import_dict = {
