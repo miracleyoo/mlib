@@ -1,4 +1,4 @@
-from file import path_func
+# from file import path_func
 import os
 import os.path as op
 import cv2
