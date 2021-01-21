@@ -5,8 +5,8 @@ import os.path as op
 from collections import namedtuple
 from math import ceil
 
-import mlib.file.io as mio
 import mlib.file.path_func as pf
+from mlib.file import io as mio
 from mlib.cv import VideoReader, gen_video
 
 Size = namedtuple("Size", ["height", "width"])
