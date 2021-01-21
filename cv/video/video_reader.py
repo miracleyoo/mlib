@@ -1,3 +1,4 @@
+from file import path_func
 import os
 import os.path as op
 import cv2
@@ -7,7 +8,9 @@ import numpy as np
 
 from collections import namedtuple
 
-import mlib.file.path_func as pf
+# import mlib.file.path_func as pf
+
+from mlib.file import path_func as pf
 
 logger = logging.getLogger(__name__)
 Size = namedtuple("Size", ["height", "width"])
