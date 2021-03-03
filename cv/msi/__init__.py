@@ -2,4 +2,5 @@
 
 """
 
+from . import mgeo
 from .split_band import MultiSpectralDecoder

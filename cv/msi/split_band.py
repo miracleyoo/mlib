@@ -23,6 +23,18 @@ __all__ = ["MultiSpectralDecoder"]
 
 
 class MultiSpectralDecoder():
+    """ Split Raw HSI/MSI image/video into (C, H, W) shape images.
+    Usage:
+        Set path variable when init or later, then call split_image(for images)
+        or split_frame_at_index, split_video(for vidwo). Lastly, .band() method
+        can return a certain band/bands from the splitted image last time. 
+    Args:
+        path: A path string of an image/video.
+        output_root: The output path string.
+        row_band_num: The mosaic's row number.
+        col_band_num: The mosaic's column number.
+        wave_lengthes: Wavelengths matrix of a single mosaic.
+    """
     def __init__(self, path=None, output_root=None, row_band_num=5, col_band_num=5, wave_lengthes=_wavelength):
         self.row_band_num = row_band_num
         self.col_band_num = col_band_num
