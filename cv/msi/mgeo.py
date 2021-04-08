@@ -118,3 +118,20 @@ def mask_A_by_B(A, B):
     mask = B.sum(axis=0)>1e-3
     masked_A = mask*A
     return masked_A
+
+def adjust_A_by_B(A, B):
+    """ Adjust image A's each band by the corresponding B's band.
+
+        The output is A with each band have the same mean and std
+        value of the corresponding B's band.
+
+        A/B: Shape: [C, H, W]
+    """
+    for i in range(A.shape[0]):
+        ap = A[i].flatten()
+        ap = ap[ap!=0]
+        bp = B[i].flatten()
+        bp = bp[bp!=0]
+        A[i] = (A[i]-ap.mean())/ap.std()
+        A[i] = A[i]*bp.std()+bp.mean()
+    return A
