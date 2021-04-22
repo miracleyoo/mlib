@@ -62,13 +62,16 @@ def sen2rgb(img, scale=30):
     """
     return (img[(3,2,1),]/256*scale).astype(np.uint8)
 
-def cropbyshp(raster, shp):
+def cropbyshp(raster, shp, boundary_clip=True):
     """ Crop a raster using a shapefile.
     """
     # Reproject the shapefile to the same crs of raster.
     shp = shp.to_crs({"init": str(raster.crs)})
     # Compute the rectangular Polygon bounding box of a certain shapefile.
-    bbpoly = bbox_polygon(shp)
+    if boundary_clip:
+        bbpoly = bbox_polygon(shp)
+    else:
+        bbpoly = shp
     # Execute the mask operation.
     out_img, out_transform = mask(dataset=raster, shapes=polygon2geojson(bbpoly), crop=True, all_touched=True)
     return out_img
