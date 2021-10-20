@@ -39,43 +39,44 @@ def host_values_selector(misaka_value=None, gypsum_value=None, win_value=None, m
         return None
 
 
-def get_new_folder(path):
-    """ Return a path to a folder, creating it if it doesn't exist, creating new one if existing.
+def get_new_path(path):
+    """ Return a path to a file, creat its parent folder if it doesn't exist, creat new one if existing.
 
-    If the folder already exists, this function will try to make `path`_`idx` folder,
+    If the folder/file already exists, this function will use `path`_`idx` as new name, and make
+    corresponding folder if `path` is a folder.
     idx will starts from 1 and keeps +1 until find a valid name without occupation.
 
     If the folder and its parent folders don't exist, keeps making these series of folders.
 
     Args:
-        path: The path of the new folder.
+        path: The path of a file/folder.
     Returns:
         _ : The guaranteed new path of the folder/file.
     """
-    logger.debug(f"Requested path: {path}")
     path = Path(path)
-    name = path.name
     root = Path(*path.parts[:-1])
 
+    if not root.exists():
+        root.mkdir(parents=True, exist_ok=True)
+
     if not path.exists():
-        path.mkdir(parents=True, exist_ok=True)
         new_path = path
+        if new_path.suffix == '':
+            new_path.mkdir()
     else:
         idx = 1
         while True:
-            new_name = name+"_"+str(idx)
-            new_path = root / new_name
+            stem = path.stem+"_"+str(idx)
+            new_path = root / (stem+path.suffix)
             if not new_path.exists():
                 if new_path.suffix == '':
-                    new_path.mkdir(parents=True, exist_ok=True)
-                    # os.makedirs(str(new_path))
+                    new_path.mkdir()
                 break
             idx += 1
-    logger.debug(f"Retruning path: {str(new_path)}")
     return str(new_path)
 
-
-make_new = get_new_folder
+make_new = get_new_path
+get_new_folder = get_new_path
 
 
 def get_folder(path):
