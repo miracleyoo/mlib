@@ -5,7 +5,7 @@ import importlib
 __all__ = ["imshow", "batch_show"]
 
 
-def imshow(img, bands=(3, 2, 1), multiply=1, scale=1, method='plt', cmap='gray', ret=False, show=True, vrange_mode='auto', channel_first=None):
+def imshow(img, bands=(3, 2, 1), multiply=1, scale=1, method='plt', cmap='gray', ret_fig=False, show=True, vrange_mode='auto', channel_first=None):
     """ Show an image with various common type, bits.
         This function support numpy.ndarry, torch.Tensor as input.
         The channel dimension can be the first or last.
@@ -20,7 +20,7 @@ def imshow(img, bands=(3, 2, 1), multiply=1, scale=1, method='plt', cmap='gray',
                 may not work using matplotlib.pyplot, so you can use 'pil' instead. 
         cmap: When the image only has two dimension, or only select one band, the cmap used by
             matplotlib.pyplot. Default is gray.
-        ret: Whether return the processed input image.
+        ret_fig: Whether return the processed input image.
         vrange_mode: When the input image is monochrome, whether use a cmap value range auto min-max,
             or use a fixed range from 0 to 255. Select from ('auto', 'fixed').
     """
@@ -28,7 +28,7 @@ def imshow(img, bands=(3, 2, 1), multiply=1, scale=1, method='plt', cmap='gray',
     assert vrange_mode in ('auto', 'fixed')
 
     if not show:
-        ret = True
+        ret_fig = True
     res = None
 
     if method not in ('plt', 'pil'):
@@ -101,14 +101,14 @@ def imshow(img, bands=(3, 2, 1), multiply=1, scale=1, method='plt', cmap='gray',
             res = show_img(img, method, cmap)
     if res is not None:
         return res
-    if ret:
+    if ret_fig:
         return img
 
 
-def batch_show(imgs, sub_titles=None, title=None, row_labels=None, col_labels=None, cmap='gray', vrange_mode='fixed'):
+def batch_show(imgs, sub_titles=None, title=None, row_labels=None, col_labels=None, cmap='gray', vrange_mode='fixed', ret_fig=False):
     """ Show images. 
     Args:
-        imgs: Supposed to be an 2-d list or tuple. each element is an image in numpy.ndarray format.
+        imgs: Supposed to be an 2-d list or tuple. Each element is an image in numpy.ndarray format.
         sub_titles: Titles of each subplot.
         title: The image overall title.
         cmap: When the image only has two dimension, or only select one band, the cmap used by
@@ -122,7 +122,7 @@ def batch_show(imgs, sub_titles=None, title=None, row_labels=None, col_labels=No
     cols = max([len(i) for i in imgs])
 
     plt = importlib.import_module('matplotlib.pyplot')
-    plt.figure()
+    # plt.figure()
     fig, axs = plt.subplots(rows, cols, figsize=(3*cols, 3*rows), sharey=True)
     if rows == 1:
         axs = [axs]
@@ -157,3 +157,6 @@ def batch_show(imgs, sub_titles=None, title=None, row_labels=None, col_labels=No
     if title is not None:
         fig.suptitle(title, fontsize=30)
     plt.tight_layout()
+
+    if ret_fig:
+        return fig
