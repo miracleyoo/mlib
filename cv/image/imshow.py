@@ -105,7 +105,7 @@ def imshow(img, bands=(3, 2, 1), multiply=1, scale=1, method='plt', cmap='gray',
         return img
 
 
-def batch_show(imgs, sub_titles=None, title=None, row_labels=None, col_labels=None, cmap='gray', vrange_mode='fixed', ret_fig=False):
+def batch_show(imgs, sub_titles=None, title=None, row_labels=None, col_labels=None, cmap='gray', vrange_mode='fixed', ret_fig=False, font_size=(20,20,20), font_type=None):
     """ Show images. 
     Args:
         imgs: Supposed to be an 2-d list or tuple. Each element is an image in numpy.ndarray format.
@@ -115,9 +115,13 @@ def batch_show(imgs, sub_titles=None, title=None, row_labels=None, col_labels=No
             matplotlib.pyplot. Default is gray.
         vrange_mode: When the input image is monochrome, whether use a cmap value range auto min-max,
             or use a fixed range from 0 to 255. Select from ('auto', 'fixed').
+        font_size: tuple/list/int/float, the font sizes of row, column, and subtitle. If input type is
+            int/float, set all font sizes the same.
     """
     if not (isinstance(imgs[0], list) or isinstance(imgs[0], tuple)):
         imgs = [imgs]
+    if not (isinstance(font_size, list) or isinstance(font_size, tuple)):
+        font_size = (font_size, font_size, font_size)
     rows = len(imgs)
     cols = max([len(i) for i in imgs])
 
@@ -145,11 +149,11 @@ def batch_show(imgs, sub_titles=None, title=None, row_labels=None, col_labels=No
                 axs[i, j].imshow(img)
             axs[i, j].set(xticks=[], yticks=[])
             if row_labels is not None and len(row_labels) > i:
-                axs[i, j].set_ylabel(row_labels[i], fontsize=20)
+                axs[i, j].set_ylabel(row_labels[i], fontsize=font_size[0], fontname='Times New Roman')
             if col_labels is not None and len(col_labels) > j:
-                axs[i, j].set_xlabel(col_labels[j], fontsize=20)
+                axs[i, j].set_xlabel(col_labels[j], fontsize=font_size[1], fontname='Times New Roman')
             if sub_title != '':
-                axs[i, j].set_title(sub_title, fontsize=20, y=-0.15)
+                axs[i, j].set_title(sub_title, fontsize=font_size[2], y=-0.15, fontname='Times New Roman')
 
     for ax in axs.flat:
         ax.label_outer()
