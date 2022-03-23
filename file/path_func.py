@@ -38,6 +38,7 @@ def host_values_selector(misaka_value=None, gypsum_value=None, win_value=None, m
         logger.error("OS type not supported!")
         return None
 
+### Folder Guarantee Series
 
 def get_new_path(path):
     """ Return a path to a file, creat its parent folder if it doesn't exist, creat new one if existing.
@@ -125,14 +126,25 @@ def backup_file(root, filename=None):
     if op.exists(ori_file):
         os.rename(ori_file, backup_file)
 
-
+### Split Series
 def stem(path):
+    """ Return the stem of a file in the input path.
+    """
     return os.path.splitext(os.path.basename(path))[0]
 
 
 def suffix(path):
+    """ Return the suffix of a file in the input path.
+    """
     return os.path.splitext(os.path.basename(path))[1].lstrip(".").lower()
 
+
+def asplit(path):
+    """ Return the parent folder, stem, and suffix of a file in the input path.
+    """
+    root, name = op.split(path)
+    stem, suffix = op.splitext(name)
+    return root, stem, suffix
 
 def listdir(path,
             is_file=None,
