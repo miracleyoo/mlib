@@ -56,11 +56,11 @@ class ImageSplitter:
         """
         self.padder = None
         assert self.pad_mode in ('reflection', 'replication', 'zero', 'const')
-        if self.pad_mode is 'reflection':
+        if self.pad_mode == 'reflection':
             self.padder = nn.ReflectionPad2d(self.pad_size)
-        elif self.pad_mode is 'replication':
+        elif self.pad_mode == 'replication':
             self.padder = nn.ReplicationPad2d(self.pad_size)
-        elif self.pad_mode is 'zero':
+        elif self.pad_mode == 'zero':
             self.padder = nn.ZeroPad2d(self.pad_size)
         else:
             self.padder = nn.ConstantPad2d(self.pad_size, self.padding_value)

@@ -40,7 +40,7 @@ def imshow(img, bands=(3, 2, 1), multiply=1, scale=1, method='plt', cmap='gray',
             plt = importlib.import_module('matplotlib.pyplot')
             plt.figure()
             if len(image.shape) == 2:
-                if vrange_mode is 'auto':
+                if vrange_mode == 'auto':
                     plt.imshow(image, cmap=cmap)  # Default: "viridis"
                 else:
                     plt.imshow(image, cmap=cmap, vmin=0, vmax=255)
@@ -146,7 +146,7 @@ def batch_show(imgs, sub_titles=None, title=None, row_labels=None,
             else:
                 sub_title = ''
             if len(img.shape) == 2 or img.shape[0] == 1 or img.shape[-1] == 1:
-                if vrange_mode is 'fixed':
+                if vrange_mode == 'fixed':
                     axs[i, j].imshow(img, cmap=cmap, vmin=0, vmax=255)
                 else:
                     axs[i, j].imshow(img, cmap=cmap)
